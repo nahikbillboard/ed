@@ -1,0 +1,7 @@
+{
+  "name": "KinCare AI - Senior Daily Companion",
+  "description": "AI-powered senior daily routine companion and guardian peace-of-mind dashboard with voice reminders, emergency SOS, step tracking, wellness exercises, and routine synchronization.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
