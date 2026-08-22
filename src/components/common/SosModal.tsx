@@ -80,11 +80,16 @@ export const SosModal: React.FC<SosModalProps> = ({ senior, contacts, isOpen, on
       await ApiClient.triggerSos(senior.id, coords);
       setCallSuccess(true);
       speakText(`Calling ${primaryContact.name}. Your family and emergency responders have been alerted.`);
+      
+      // Redirect to phone dialer immediately
+      window.location.href = `tel:${primaryContact.phone}`;
+      
       if (onSosTriggered) onSosTriggered();
     } catch (err) {
       console.error('SOS call trigger error:', err);
-      // Even if network glitch occurs, ensure senior knows response state
+      // Even if network glitch occurs, ensure native call dialer is still opened for safety
       setCallSuccess(true);
+      window.location.href = `tel:${primaryContact.phone}`;
     }
   };
 

@@ -695,7 +695,7 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
           <span className="bg-rose-600 text-white w-12 h-12 rounded-full flex items-center justify-center text-sm font-black shadow-sm shrink-0">
             SOS
           </span>
-          <span>CALL FOR HELP (9561442888)</span>
+          <span>CALL FOR HELP</span>
         </button>
       </div>
 

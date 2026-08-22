@@ -36,7 +36,7 @@ export class AIService {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: `Generate a short, warm, cheerful morning greeting for an elderly senior named "${seniorName}". 
         Streak: ${streak} days. Weather: ${weather}. 
         Keep under 25 words. Simple words, 1 friendly emoji, high warmth.`,
@@ -90,7 +90,7 @@ export class AIService {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: `Write a concise 2-3 sentence "Peace of Mind" daily summary for a guardian about their parent.
         Data: ${JSON.stringify(promptData)}.
         Focus on: "Is my parent safe and on track today?". Clear, reassuring, professional tone.`,
@@ -120,7 +120,7 @@ export class AIService {
 
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: `The senior "${seniorName}" says: "${userMessage}".
         Respond warmly, encouragingly, and concisely (under 35 words). 
         CRITICAL MEDICAL SAFETY: NEVER diagnose, prescribe, or advise changing medications. If they ask about medical symptoms or prescriptions, gently remind them to speak with their doctor or family.`,
