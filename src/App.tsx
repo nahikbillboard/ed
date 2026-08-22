@@ -94,17 +94,6 @@ export function App() {
       routine: updatedRoutine,
       progress: updatedProgress,
     });
-    // Trigger notification popup simulation for guardian
-    setActiveWhatsApp({
-      id: `notif_w_${Date.now()}`,
-      senior_id: bundle.senior.id,
-      channel: 'whatsapp',
-      title: `☀️ Morning Wake-up: ${bundle.senior.name} is Awake`,
-      message: `${bundle.senior.name} checked in at ${updatedRoutine.wake_time || '7:15 AM'}. Routine streak: ${updatedProgress.current_streak} days!`,
-      status: 'delivered',
-      created_at: new Date().toISOString(),
-    });
-    setIsWhatsAppOpen(true);
   };
 
   const handleActivityUpdated = (updatedAct: DailyActivity, updatedRoutine: DailyRoutine, updatedProg: SeniorProgress) => {
@@ -139,7 +128,6 @@ export function App() {
     updatedMeds: Medicine[],
     updatedRoutine: DailyRoutine,
     updatedProg: SeniorProgress,
-    whatsappData?: any
   ) => {
     if (!bundle) return;
     setBundle({
@@ -148,39 +136,15 @@ export function App() {
       routine: updatedRoutine,
       progress: updatedProg,
     });
-    if (whatsappData) {
-      setActiveWhatsApp({
-        id: `notif_med_${Date.now()}`,
-        senior_id: bundle.senior.id,
-        channel: 'whatsapp',
-        title: `💊 Medicine Taken: ${bundle.senior.name}`,
-        message: whatsappData.note ? `Medicine taken with note: ${whatsappData.note}. Synced to 9561442888.` : 'Prescription taken and verified. WhatsApp notification sent to 9561442888.',
-        status: 'delivered',
-        created_at: new Date().toISOString(),
-      });
-      setIsWhatsAppOpen(true);
-    }
   };
 
-  const handleMealCompleted = (updatedRoutine: DailyRoutine, updatedProg: SeniorProgress, whatsappData?: any) => {
+  const handleMealCompleted = (updatedRoutine: DailyRoutine, updatedProg: SeniorProgress) => {
     if (!bundle) return;
     setBundle({
       ...bundle,
       routine: updatedRoutine,
       progress: updatedProg,
     });
-    if (whatsappData) {
-      setActiveWhatsApp({
-        id: `notif_meal_${Date.now()}`,
-        senior_id: bundle.senior.id,
-        channel: 'whatsapp',
-        title: `✅ Meal Confirmed: ${bundle.senior.name}`,
-        message: whatsappData.message || 'Meal confirmed and WhatsApp notification sent to 9561442888.',
-        status: 'delivered',
-        created_at: new Date().toISOString(),
-      });
-      setIsWhatsAppOpen(true);
-    }
   };
 
   const handleProgressUpdated = (updatedProg: SeniorProgress) => {
@@ -516,12 +480,6 @@ export function App() {
         }}
       />
 
-      <WhatsAppNotificationModal
-        notification={activeWhatsApp}
-        isOpen={isWhatsAppOpen}
-        onClose={() => setIsWhatsAppOpen(false)}
-      />
-
       <CompanionChatModal
         senior={bundle.senior}
         isOpen={isCompanionChatOpen}
@@ -532,14 +490,10 @@ export function App() {
         senior={bundle.senior}
         isOpen={isDemoDrawerOpen}
         onClose={() => setIsDemoDrawerOpen(false)}
-        onEventDispatched={(call, notif) => {
+        onEventDispatched={(call) => {
           if (call) {
             setActiveVoiceCall(call);
             setIsVoiceCallOpen(true);
-          }
-          if (notif) {
-            setActiveWhatsApp(notif);
-            setIsWhatsAppOpen(true);
           }
           loadData(bundle.senior.id);
         }}
