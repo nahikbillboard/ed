@@ -18,30 +18,30 @@ export class VoiceService {
   public static generateStandardScript(seniorName: string, callType: VoiceCallItem['call_type'], options: Partial<MakeCallOptions> = {}): string {
     switch (callType) {
       case 'wakeup':
-        return `Hello ${seniorName}! Good morning! It's a brand new day with sunshine and fresh air. Your morning wellness routine is ready whenever you are. Please press "I'm Awake" on your screen to let your family know you're up and feeling good!`;
+        return `नमस्ते ${seniorName} जी! सुप्रभात! एक नई सुबह की शुरुआत हो चुकी है। आपकी सुबह की वेलनेस दिनचर्या तैयार है। कृपया स्क्रीन पर "मैं जाग गया हूँ" बटन दबाकर अपने परिवार को बताएं कि आप ठीक और खुश हैं।`;
 
       case 'meal_reminder':
-        const meal = options.mealType || 'meal';
-        return `Hello ${seniorName}! It is time for your wholesome ${meal}. Staying nourished and hydrated gives you wonderful energy. Please enjoy your meal, and press "I Had ${meal.charAt(0).toUpperCase() + meal.slice(1)}" on your tablet when you're done!`;
+        const meal = options.mealType || 'भोजन';
+        return `नमस्ते ${seniorName} जी! यह आपके पौष्टिक ${meal} का समय है। समय पर भोजन और पानी पीने से आपको ताजगी और ऊर्जा मिलती है। कृपया अपने भोजन का आनंद लें और पूरा होने पर बटन दबाएं।`;
 
       case 'medicine_reminder':
         const medNum = options.medicineNumber || 1;
         const med = db.getMedicines(options.seniorId || '').find(m => m.medicine_number === medNum);
-        const medName = med ? `${med.name} (${med.dosage_information})` : `Medicine Number ${medNum}`;
-        const instructions = med ? med.instructions : 'with water as prescribed';
-        return `Hello ${seniorName}! This is your gentle care companion reminder. It is time for your medication: please check Medicine Number ${medNum}, which is ${medName}. Remember to take it ${instructions}. Afterward, please tap "Taken" on your screen.`;
+        const medName = med ? `${med.name} (${med.dosage_information})` : `दवाई नंबर ${medNum}`;
+        const instructions = med ? med.instructions : 'पानी के साथ लें';
+        return `नमस्ते ${seniorName} जी! यह आपकी दवाई का समय है। कृपया दवाई नंबर ${medNum}, यानी ${medName} देखें और इसे ${instructions} लें। इसके बाद स्क्रीन पर दर्ज करें।`;
 
       case 'sos':
-        return `Hello, this is an automated KinCare Emergency Alert. ${seniorName} has activated the emergency SOS button. We are connecting you immediately with their primary emergency contact and notifying their family.`;
+        return `नमस्ते, यह किनकेयर स्वचालित आपातकालीन चेतावनी है। ${seniorName} जी ने आपातकालीन एसओएस बटन दबाया है। हम तुरंत उनके आपातकालीन संपर्क से कॉल जोड़ रहे हैं।`;
 
       case 'wellness_check':
-        return `Hello ${seniorName}! This is your daily companion check-in. You have completed your walking and gentle breathing today. You are doing fantastic! Remember that your family loves you and is cheering you on.`;
+        return `नमस्ते ${seniorName} जी! यह आपका दैनिक वेलनेस चेक-इन है। आपने आज का वॉक और ध्यान पूरा कर लिया है। आप बहुत अच्छा कर रहे हैं!`;
 
       case 'companion_chat':
-        return `Hello ${seniorName}! How are you feeling today? I am here to assist you with your daily routine and keep you connected with your family.`;
+        return `नमस्ते ${seniorName} जी! आप आज कैसा महसूस कर रहे हैं? मैं आपकी दैनिक दिनचर्या में सहायता करने और परिवार से जुड़े रहने के लिए यहाँ हूँ।`;
 
       default:
-        return `Hello ${seniorName}, your KinCare daily companion is checking in. Have a warm and peaceful day!`;
+        return `नमस्ते ${seniorName} जी, आपका किनकेयर साथी आपके साथ है। आपका दिन सुखद और मंगलमय हो!`;
     }
   }
 

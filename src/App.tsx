@@ -403,6 +403,8 @@ export function App() {
                 senior={bundle.senior}
                 progress={bundle.progress}
                 rewards={bundle.rewards}
+                routine={bundle.routine}
+                activity={bundle.activity}
                 onProgressUpdated={handleProgressUpdated}
                 onNavigateHome={() => setSeniorSubView('home')}
               />

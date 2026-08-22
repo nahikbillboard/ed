@@ -45,7 +45,7 @@ export const GuardianDashboard: React.FC<GuardianDashboardProps> = ({
       const summary = await ApiClient.getGuardianSummary(senior.id);
       setAiSummary(summary);
     } catch (e) {
-      setAiSummary(`Eleanor is active today with a 7-day routine streak. She woke up at ${routine.wake_time || '7:15 AM'}, walked ${activity.steps.toLocaleString()} steps, and has completed scheduled wellness routines.`);
+      setAiSummary(`${senior.name} is active today with a 7-day routine streak. She woke up at ${routine.wake_time || '7:15 AM'}, walked ${activity.steps.toLocaleString()} steps, and has completed scheduled wellness routines.`);
     } finally {
       setLoadingSummary(false);
     }

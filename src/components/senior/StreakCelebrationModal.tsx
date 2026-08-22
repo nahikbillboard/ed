@@ -53,7 +53,7 @@ export const StreakCelebrationModal: React.FC<StreakCelebrationModalProps> = ({
       frame();
 
       const firstName = seniorName.split(' ')[0];
-      speakText(`Congratulations ${firstName}! You have achieved a ${streakDays} day streak! Keep up the wonderful work!`);
+      speakText(`बधाई हो ${firstName} जी! आपने ${streakDays} दिनों का स्ट्रीक पूरा कर लिया है! ऐसे ही स्वस्थ और खुश रहें!`);
     }
   }, [isOpen, streakDays, seniorName]);
 

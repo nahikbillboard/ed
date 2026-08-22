@@ -21,7 +21,7 @@ export class WhatsAppService {
     let title = 'WhatsApp Notification';
     let formattedMessage = '';
 
-    const seniorName = (payload.parameters.seniorName as string) || 'Eleanor';
+    const seniorName = (payload.parameters.seniorName as string) || 'Sunita';
     const time = (payload.parameters.time as string) || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     switch (payload.templateType) {

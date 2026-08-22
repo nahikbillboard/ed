@@ -40,7 +40,7 @@ export const SeniorWakeUp: React.FC<SeniorWakeUpProps> = ({
       const res = await ApiClient.checkinWakeUp(senior.id);
       setCompletedTime(res.wakeTime);
       onWakeUpSuccess(res.routine, res.progress);
-      speakText(`Good morning, ${senior.name}! Awakening confirmed. Your 7-day streak is glowing, and 50 Wellness XP has been awarded.`);
+      speakText(`सुप्रभात ${senior.name} जी! आपका जागना दर्ज हो गया है। आपका स्ट्रीक शानदार चल रहा है, और आपको 50 वेलनेस एक्स-पी मिल गए हैं।`);
     } catch (e) {
       console.error('Wake up checkin error:', e);
     } finally {

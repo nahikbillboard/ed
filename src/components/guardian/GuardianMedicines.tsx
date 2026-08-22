@@ -28,7 +28,7 @@ export const GuardianMedicines: React.FC<GuardianMedicinesProps> = ({
       await ApiClient.orderMedicineRefill(`refill_${Date.now()}`, med.id, 30);
       setRefillSuccessMed(med.name);
       onRefillOrdered();
-      speakText(`Refill order placed for ${med.name}. 30 doses added to inventory.`);
+      speakText(`${med.name} के लिए रिफिल ऑर्डर दे दिया गया है। 30 खुराक इन्वेंट्री में जोड़ दी गई हैं।`);
       setTimeout(() => setRefillSuccessMed(null), 4000);
     } catch (e) {
       console.error('Failed to order refill:', e);

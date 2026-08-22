@@ -8,6 +8,10 @@ function getLocalBundle(): TodayBundle {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.senior && parsed.routine) {
+        if (parsed.senior.name === 'Eleanor Vance' || parsed.senior.name === 'Eleanor') {
+          parsed.senior.name = 'Sunita';
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+        }
         return parsed;
       }
     }
@@ -19,13 +23,13 @@ function getLocalBundle(): TodayBundle {
 
   const initialBundle: TodayBundle = {
     senior: {
-      id: 'senior_eleanor_01',
+      id: 'senior_sunita_01',
       user_id: 'user_senior_01',
-      name: 'Eleanor Vance',
+      name: 'Sunita',
       age: 78,
       guardian_name: 'David Vance',
       guardian_phone: '9561442888',
-      preferred_language: 'English',
+      preferred_language: 'Hindi',
       wake_time: '07:30',
       breakfast_time: '08:30',
       lunch_time: '13:00',
@@ -721,7 +725,7 @@ export class ApiClient {
     } catch (e) {
       // Offline fallback
     }
-    return 'Good morning, Eleanor! Today is a beautiful day. Remember to take your morning walk and stay hydrated.';
+    return 'सुप्रभात Sunita जी! आज का दिन बहुत सुंदर है। अपनी दैनिक वॉक करें और स्वस्थ रहें।';
   }
 
   public static async getGuardianSummary(seniorId: string): Promise<string> {
@@ -731,7 +735,7 @@ export class ApiClient {
     } catch (e) {
       // Offline fallback
     }
-    return 'Eleanor is doing wonderful today. Daily routine is active with 5,420 steps recorded and prescriptions on schedule.';
+    return 'Sunita is doing wonderful today. Daily routine is active with 5,420 steps recorded and prescriptions on schedule.';
   }
 
   public static async companionChat(seniorId: string, message: string): Promise<string> {
@@ -744,7 +748,7 @@ export class ApiClient {
     } catch (e) {
       // Offline fallback
     }
-    return 'I am right here with you, Eleanor! That sounds lovely. How are you feeling today?';
+    return 'मैं आपके साथ हूँ, Sunita जी! आप आज कैसा महसूस कर रही हैं?';
   }
 
   // Demo Controls

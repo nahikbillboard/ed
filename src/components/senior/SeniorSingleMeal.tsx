@@ -102,19 +102,19 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      speakText('Voice dictation is not supported in this browser. Please type your dish name.');
+      speakText('इस ब्राउज़र में वॉयस टाइपिंग समर्थित नहीं है। कृपया लिखकर बताएं।');
       return;
     }
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
+      recognition.lang = 'hi-IN';
       recognition.continuous = false;
       recognition.interimResults = false;
 
       recognition.onstart = () => {
         setIsListening(true);
-        speakText('Listening... please say what you ate.');
+        speakText('सुन रहे हैं... कृपया बताइए कि आपने क्या खाया।');
       };
 
       recognition.onresult = (event: any) => {
@@ -167,7 +167,7 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
       setSentSuccess(true);
 
       speakText(
-        `Wonderful ${senior.name}! Your ${mealType} with ${chosenDish} is recorded and sent to your child on WhatsApp.`
+        `बहुत बढ़िया ${senior.name} जी! आपका ${mealType} में ${chosenDish} दर्ज हो गया है और आपके बच्चे को व्हाट्सएप पर भेज दिया गया है।`
       );
 
       // 2. Open WhatsApp directly with ready pre-filled message for 9561442888

@@ -340,7 +340,7 @@ apiRouter.get('/checkin/wakeup/:seniorId', (req, res) => {
 // ----------------------------------------------------
 apiRouter.post('/routine/task-complete', async (req, res) => {
   const { seniorId, taskType, taskTitle, extraDetails, dishName } = req.body;
-  const senior = db.getSenior(seniorId) || { name: 'Eleanor', guardian_phone: '9561442888' };
+  const senior = db.getSenior(seniorId) || { name: 'Sunita', guardian_phone: '9561442888' };
   const today = getTodayStr();
   const routine = db.getDailyRoutine(seniorId, today);
   const now = new Date();
@@ -1127,21 +1127,21 @@ apiRouter.post('/voice/call', async (req, res) => {
 
 apiRouter.post('/ai/companion-chat', async (req, res) => {
   const { seniorId, message } = req.body;
-  const senior = db.getSenior(seniorId) || { name: 'Eleanor' };
+  const senior = db.getSenior(seniorId) || { name: 'Sunita' };
   const reply = await AIService.companionChat(senior.name, message);
   res.json({ success: true, data: { reply } });
 });
 
 apiRouter.get('/ai/morning-greeting', async (req, res) => {
-  const seniorId = (req.query.seniorId as string) || 'senior_eleanor_01';
-  const senior = db.getSenior(seniorId) || { name: 'Eleanor' };
+  const seniorId = (req.query.seniorId as string) || 'senior_sunita_01';
+  const senior = db.getSenior(seniorId) || { name: 'Sunita' };
   const prog = db.getProgress(seniorId);
   const greeting = await AIService.generateMorningGreeting(senior.name, prog.current_streak);
   res.json({ success: true, data: { greeting } });
 });
 
 apiRouter.get('/ai/guardian-summary', async (req, res) => {
-  const seniorId = (req.query.seniorId as string) || 'senior_eleanor_01';
+  const seniorId = (req.query.seniorId as string) || 'senior_sunita_01';
   const summary = await AIService.generateGuardianDailySummary(seniorId);
   res.json({ success: true, data: { summary } });
 });

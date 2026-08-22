@@ -52,7 +52,7 @@ export const SeniorOnboarding: React.FC<SeniorOnboardingProps> = ({ onComplete, 
 
     try {
       const created = await ApiClient.createSenior(formData);
-      speakText(`Welcome to KinCare, ${created.name}! Your daily companion setup is complete.`);
+      speakText(`किनकेयर में आपका स्वागत है, ${created.name} जी! आपका दैनिक साथी सेटअप पूरा हो गया है।`);
       onComplete(created);
     } catch (err) {
       console.error('Failed to create senior:', err);

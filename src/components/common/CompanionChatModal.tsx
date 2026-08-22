@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MessageCircle, Send, Volume2, X, Sparkles, Heart, Bot } from 'lucide-react';
 import { ApiClient } from '../../services/apiClient';
-import { speakText } from '../../utils/audioSpeech';
+import { speakText, convertToHindiSpeech } from '../../utils/audioSpeech';
+import { useAudioLanguage } from '../../context/LanguageContext';
 import { Senior } from '../../types';
 
 interface CompanionChatModalProps {
@@ -18,11 +19,12 @@ interface ChatMessage {
 }
 
 export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, isOpen, onClose }) => {
+  const { language } = useAudioLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg_1',
       sender: 'companion',
-      text: `Hello ${senior.name}! ❤️ I am your KinCare companion. I'm here to support your daily wellness, celebrate your steps, and keep your family informed. How are you feeling right now?`,
+      text: `नमस्ते ${senior.name} जी! ❤️ मैं आपका किनकेयर साथी हूँ। मैं आपके दैनिक स्वास्थ्य और खुशहाली में मदद करने के लिए यहाँ हूँ। आप आज कैसा महसूस कर रहे हैं?`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
   ]);
@@ -55,25 +57,26 @@ export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, 
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, companionMsg]);
-      speakText(reply, 0.88);
+      speakText(reply, 0.88, 1.0, language);
     } catch (e) {
       const fallbackMsg: ChatMessage = {
         id: `comp_err_${Date.now()}`,
         sender: 'companion',
-        text: `I'm with you, ${senior.name}! You are doing wonderful today. Let's keep your streak glowing!`,
+        text: `मैं आपके साथ हूँ, ${senior.name} जी! आप आज बहुत अच्छा कर रहे हैं। आपकी सेहत और खुशहाली सबसे महत्वपूर्ण है।`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, fallbackMsg]);
+      speakText(fallbackMsg.text, 0.88, 1.0, language);
     } finally {
       setLoading(false);
     }
   };
 
   const quickPrompts = [
-    'How is my daily routine going?',
-    'Tell me an encouraging quote ☀️',
-    'What is my current streak?',
-    'Remind me when dinner is 🍽️'
+    'मेरी आज की दिनचर्या कैसी चल रही है? 📋',
+    'मुझे एक प्रेरक सुविचार सुनाइए ☀️',
+    'मेरा स्ट्रीक और XP कितना है? 🏆',
+    'मुझे रात के खाने का समय बताइए 🍽️'
   ];
 
   return (
@@ -87,10 +90,10 @@ export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, 
             </div>
             <div>
               <h3 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 flex items-center gap-2">
-                <span>AI Daily Companion</span>
+                <span>AI Daily Companion • साथी</span>
                 <Sparkles className="w-4 h-4 text-[#FF6321]" />
               </h3>
-              <p className="text-xs text-stone-500 font-normal">Loving voice companion for {senior.name}</p>
+              <p className="text-xs text-stone-500 font-normal">Hindi Voice Companion for {senior.name}</p>
             </div>
           </div>
           <button
@@ -121,12 +124,12 @@ export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, 
                 <span>{msg.time}</span>
                 {msg.sender === 'companion' && (
                   <button
-                    onClick={() => speakText(msg.text, 0.88)}
-                    className="hover:text-[#FF6321] flex items-center gap-1 font-semibold text-stone-500 transition-colors"
-                    title="Read aloud"
+                    onClick={() => speakText(msg.text, 0.88, 1.0, language)}
+                    className="hover:text-[#FF6321] flex items-center gap-1 font-semibold text-stone-500 transition-colors cursor-pointer"
+                    title="हिंदी में सुनें (Read Aloud)"
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>Read</span>
+                    <Volume2 className="w-3.5 h-3.5 text-[#FF6321]" />
+                    <span>हिंदी में सुनें</span>
                   </button>
                 )}
               </div>
@@ -135,7 +138,7 @@ export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, 
           {loading && (
             <div className="flex items-center gap-2 text-[#FF6321] text-sm font-medium pl-2">
               <Sparkles className="w-4 h-4 animate-spin" />
-              <span>Companion is thinking warmly...</span>
+              <span>साथी विचार कर रहे हैं... (Thinking...)</span>
             </div>
           )}
         </div>
@@ -146,7 +149,7 @@ export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, 
             <button
               key={i}
               onClick={() => handleSend(prompt)}
-              className="text-xs whitespace-nowrap bg-[#FAF8F5] hover:bg-stone-100 text-stone-700 border border-stone-200 px-3.5 py-1.5 rounded-full transition-colors font-medium shrink-0"
+              className="text-xs whitespace-nowrap bg-[#FAF8F5] hover:bg-stone-100 text-stone-700 border border-stone-200 px-3.5 py-1.5 rounded-full transition-colors font-medium shrink-0 cursor-pointer"
             >
               {prompt}
             </button>
@@ -165,13 +168,13 @@ export const CompanionChatModal: React.FC<CompanionChatModalProps> = ({ senior, 
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message or question..."
+            placeholder="यहाँ टाइप करें या संदेश लिखें... (Type here)"
             className="flex-1 bg-[#FAF8F5] border border-stone-200 rounded-2xl px-4 py-3 text-base text-stone-900 placeholder-stone-400 focus:outline-none focus:border-orange-400 focus:bg-white transition-all"
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="px-5 bg-[#FF6321] hover:bg-[#e85516] active:scale-95 text-white font-bold rounded-2xl flex items-center justify-center transition-all disabled:opacity-50"
+            className="px-5 bg-[#FF6321] hover:bg-[#e85516] active:scale-95 text-white font-bold rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer"
           >
             <Send className="w-5 h-5" />
           </button>

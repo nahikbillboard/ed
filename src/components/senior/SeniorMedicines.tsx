@@ -60,7 +60,7 @@ export const SeniorMedicines: React.FC<SeniorMedicinesProps> = ({
         medicine: med.name,
       });
 
-      speakText(`Medicine #${med.medicine_number}, ${med.name}, confirmed and sent to your child on WhatsApp.`);
+      speakText(`दवाई नंबर ${med.medicine_number}, ${med.name}, दर्ज हो गई है और आपके बच्चे को व्हाट्सएप पर भेज दी गई है।`);
 
       // Open WhatsApp directly for 9561442888
       redirectMedicineWithWhatsApp(
@@ -93,7 +93,7 @@ export const SeniorMedicines: React.FC<SeniorMedicinesProps> = ({
     try {
       await ApiClient.snoozeMedicineReminder(med.id, senior.id);
       setSnoozedStatus(prev => ({ ...prev, [med.id]: true }));
-      speakText(`Reminder for ${med.name} snoozed. I will remind you again in 15 minutes.`);
+      speakText(`${med.name} दवाई का रिमाइंडर 15 मिनट के लिए आगे बढ़ा दिया गया है। मैं 15 मिनट बाद फिर याद दिलाऊंगा।`);
     } catch (e) {
       console.error('Failed to snooze:', e);
     } finally {

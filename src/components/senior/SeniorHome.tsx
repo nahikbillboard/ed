@@ -222,7 +222,7 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
         onTaskCompleted(res.routine, res.progress, res.whatsapp);
       }
 
-      speakText(`Well done, ${senior.name}! ${task.title} is completed and verified.`);
+      speakText(`शाबाश ${senior.name} जी! ${task.title} सफलतापूर्वक पूरा हो गया है।`);
 
       // 2. Automatically redirect to WhatsApp with ready message for 9561442888
       redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
@@ -253,7 +253,7 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
       if (onTaskCompleted) {
         onTaskCompleted(res.routine, res.progress, res.whatsapp);
       }
-      speakText(`Congratulations, ${senior.name}! Daily Walk completed. Message dispatched to your family.`);
+      speakText(`बधाई हो ${senior.name} जी! दैनिक वॉक पूरी हो गई है और परिवार को संदेश भेज दिया गया है।`);
       redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } catch (e) {
       console.error('Failed to complete walk:', e);

@@ -50,18 +50,18 @@ export const SeniorBreathing: React.FC<SeniorBreathingProps> = ({
             // Transition to next phase
             if (phase === 'inhale') {
               setPhase('hold1');
-              if (voiceGuide) speakText('Hold your breath gently...', 0.85);
+              if (voiceGuide) speakText('सांस को आराम से रोक कर रखें...', 0.85);
               return 4;
             } else if (phase === 'hold1') {
               setPhase('exhale');
-              if (voiceGuide) speakText('Slowly breathe out...', 0.85);
+              if (voiceGuide) speakText('धीरे-धीरे सांस बाहर छोड़ें...', 0.85);
               return 4;
             } else if (phase === 'exhale') {
               setPhase('hold2');
               return 2;
             } else {
               setPhase('inhale');
-              if (voiceGuide) speakText('Breathe in deeply...', 0.85);
+              if (voiceGuide) speakText('गहरी सांस अंदर लें...', 0.85);
               return 4;
             }
           }
@@ -79,7 +79,7 @@ export const SeniorBreathing: React.FC<SeniorBreathingProps> = ({
   const handleStart = () => {
     setIsActive(true);
     playChime('ding');
-    if (voiceGuide) speakText('Welcome to your calm breathing exercise. Breathe in deeply...', 0.85);
+    if (voiceGuide) speakText('शांत श्वास व्यायाम में आपका स्वागत है। गहरी सांस अंदर लें...', 0.85);
   };
 
   const handlePause = () => {
@@ -111,7 +111,7 @@ export const SeniorBreathing: React.FC<SeniorBreathingProps> = ({
       setLoading(true);
       const res = await ApiClient.completeBreathing(senior.id, targetDuration);
       onBreathingCompleted(res.routine, res.progress);
-      speakText('Wonderful job! Breathing exercise is complete. You have earned 60 Wellness XP.');
+      speakText('बहुत बढ़िया! सांस का व्यायाम पूरा हो गया है। आपको 60 वेलनेस एक्स-पी मिले हैं।');
     } catch (e) {
       console.error('Failed to complete breathing:', e);
     } finally {

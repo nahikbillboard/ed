@@ -43,9 +43,9 @@ export const SeniorWalking: React.FC<SeniorWalkingProps> = ({
       if (res.unlockedBreathing || res.activity.steps >= res.activity.step_goal) {
         playChime('success');
         confetti({ particleCount: 70, spread: 60 });
-        speakText(`Congratulations ${senior.name}! You reached your daily walking goal! Breathing exercise is now unlocked.`);
+        speakText(`बधाई हो ${senior.name} जी! आपने अपना चलने का लक्ष्य पूरा कर लिया है! सांस का व्यायाम अब खुल गया है।`);
       } else {
-        speakText(`Added ${amount} steps. Great progress!`);
+        speakText(`${amount} कदम जुड़ गए हैं। बहुत अच्छा!`);
       }
     } catch (e) {
       console.error('Failed to add steps:', e);

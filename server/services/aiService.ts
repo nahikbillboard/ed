@@ -59,7 +59,7 @@ export class AIService {
    * Generates a daily guardian peace-of-mind summary.
    */
   public static async generateGuardianDailySummary(seniorId: string): Promise<string> {
-    const senior = db.getSenior(seniorId) || { name: 'Eleanor', age: 78 };
+    const senior = db.getSenior(seniorId) || { name: 'Sunita', age: 78 };
     const today = new Date().toISOString().split('T')[0];
     const routine = db.getDailyRoutine(seniorId, today);
     const activity = db.getDailyActivity(seniorId, today);
@@ -114,7 +114,7 @@ export class AIService {
    */
   public static async companionChat(seniorName: string, userMessage: string, history: Array<{ role: 'user' | 'model'; text: string }> = []): Promise<string> {
     const ai = this.getClient();
-    const fallback = `I'm right here with you, ${seniorName}. You're doing wonderful today! If you need any immediate assistance or feel unwell, please tap the SOS button or contact your family.`;
+    const fallback = `मैं आपके साथ हूँ, ${seniorName} जी। आप आज बहुत अच्छा कर रहे हैं! यदि आपको किसी सहायता की आवश्यकता हो, तो कृपया लाल एसओएस बटन दबाएं या परिवार से संपर्क करें।`;
 
     if (!ai) return fallback;
 
@@ -122,12 +122,13 @@ export class AIService {
       const response = await ai.models.generateContent({
         model: 'gemini-3.7-flash',
         contents: `The senior "${seniorName}" says: "${userMessage}".
-        Respond warmly, encouragingly, and concisely (under 35 words). 
+        Respond warmly, encouragingly, and concisely in sweet, respectful, elder-friendly HINDI (under 35 words). 
         CRITICAL MEDICAL SAFETY: NEVER diagnose, prescribe, or advise changing medications. If they ask about medical symptoms or prescriptions, gently remind them to speak with their doctor or family.`,
         config: {
           maxOutputTokens: 80,
           temperature: 0.3,
           systemInstruction: `You are KinCare AI, a loving, respectful, patient companion for an elderly senior. 
+          Always speak in respectful, warm HINDI (using 'आप', 'जी'). 
           Keep sentences short, clear, and reassuring. 
           STRICT SAFETY RULE: Do NOT diagnose diseases or change prescriptions.`,
         },

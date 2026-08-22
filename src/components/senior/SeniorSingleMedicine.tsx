@@ -97,19 +97,19 @@ export const SeniorSingleMedicine: React.FC<SeniorSingleMedicineProps> = ({
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      speakText('Voice dictation is not supported in this browser. Please type your note.');
+      speakText('इस ब्राउज़र में वॉयस टाइपिंग समर्थित नहीं है। कृपया लिखकर बताएं।');
       return;
     }
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
+      recognition.lang = 'hi-IN';
       recognition.continuous = false;
       recognition.interimResults = false;
 
       recognition.onstart = () => {
         setIsListening(true);
-        speakText('Listening... please speak your note.');
+        speakText('सुन रहे हैं... कृपया अपना संदेश बोलिए।');
       };
 
       recognition.onresult = (event: any) => {
@@ -177,7 +177,7 @@ export const SeniorSingleMedicine: React.FC<SeniorSingleMedicineProps> = ({
       setSentSuccess(true);
 
       speakText(
-        `Wonderful ${senior.name}! Medicine number ${medicineNumber}, ${med.name}, is recorded and sent to your child on WhatsApp.`
+        `बहुत बढ़िया ${senior.name} जी! दवाई नंबर ${medicineNumber}, ${med.name}, दर्ज हो गई है और आपके बच्चे को व्हाट्सएप पर भेज दी गई है।`
       );
 
       // 2. Open WhatsApp directly with ready pre-filled message for 9561442888

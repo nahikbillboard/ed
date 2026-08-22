@@ -36,7 +36,7 @@ export const SosModal: React.FC<SosModalProps> = ({ senior, contacts, isOpen, on
     }
 
     playChime('alert');
-    speakText('Emergency Alert triggered. Do you want to call your emergency contact?');
+    speakText('आपातकालीन अलर्ट शुरू हो गया है। क्या आप अपने आपातकालीन संपर्क को कॉल करना चाहते हैं?');
 
     // Attempt geolocation
     if ('geolocation' in navigator) {
@@ -79,7 +79,7 @@ export const SosModal: React.FC<SosModalProps> = ({ senior, contacts, isOpen, on
     try {
       await ApiClient.triggerSos(senior.id, coords);
       setCallSuccess(true);
-      speakText(`Calling ${primaryContact.name}. Your family and emergency responders have been alerted.`);
+      speakText(`${primaryContact.name} जी को कॉल किया जा रहा है। आपके परिवार और सहायकों को सूचित कर दिया गया है।`);
       
       // Redirect to phone dialer immediately
       window.location.href = `tel:${primaryContact.phone}`;
