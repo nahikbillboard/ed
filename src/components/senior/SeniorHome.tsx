@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { 
   Sun, 
   Footprints, 
@@ -16,13 +17,16 @@ import {
   ArrowRight,
   Send,
   MessageCircle,
-  Activity
+  Activity,
+  Trophy,
+  Award
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Senior, DailyRoutine, DailyActivity, SeniorProgress, Medicine } from '../../types';
 import { ApiClient } from '../../services/apiClient';
 import { playChime, speakText } from '../../utils/audioSpeech';
 import { redirectWithWhatsApp, DEFAULT_GUARDIAN_PHONE } from '../../utils/whatsappHelper';
+import { StreakCelebrationModal } from './StreakCelebrationModal';
 
 interface SeniorHomeProps {
   senior: Senior;
@@ -47,6 +51,7 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
 }) => {
   const [loadingTask, setLoadingTask] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed'>('all');
+  const [showStreakModal, setShowStreakModal] = useState(false);
 
   const isAwake = routine.wake_status === 'completed';
   const stepsTaken = activity.steps || 0;
@@ -201,6 +206,14 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
       origin: { y: 0.6 }
     });
 
+    // Synchronously pre-open tab in click event loop to bypass popup blocking
+    let waWin: Window | null = null;
+    try {
+      waWin = window.open('about:blank', '_blank');
+    } catch (err) {
+      console.warn('Pre-open popup blocked:', err);
+    }
+
     try {
       // 1. Update backend routine state & dispatch server notifications
       const res = await ApiClient.completeRoutineTask(senior.id, task.taskType, task.title, task.details);
@@ -212,11 +225,11 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
       speakText(`Well done, ${senior.name}! ${task.title} is completed and verified.`);
 
       // 2. Automatically redirect to WhatsApp with ready message for 9561442888
-      redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE);
+      redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } catch (err) {
       console.error('Failed to complete routine task:', err);
       // Fallback direct redirection even if offline
-      redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE);
+      redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } finally {
       setLoadingTask(null);
     }
@@ -228,16 +241,23 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
     playChime('success');
     confetti({ particleCount: 70, spread: 60 });
 
+    let waWin: Window | null = null;
+    try {
+      waWin = window.open('about:blank', '_blank');
+    } catch (err) {
+      console.warn('Pre-open popup blocked:', err);
+    }
+
     try {
       const res = await ApiClient.completeRoutineTask(senior.id, 'walk', 'Daily Walk', `${stepGoal} steps target achieved`);
       if (onTaskCompleted) {
         onTaskCompleted(res.routine, res.progress, res.whatsapp);
       }
       speakText(`Congratulations, ${senior.name}! Daily Walk completed. Message dispatched to your family.`);
-      redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE);
+      redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } catch (e) {
       console.error('Failed to complete walk:', e);
-      redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE);
+      redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } finally {
       setLoadingTask(null);
     }
@@ -257,13 +277,21 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
         </div>
 
         <div className="flex sm:flex-col items-start sm:items-end gap-2 shrink-0">
-          <div 
-            onClick={() => onNavigate('rewards')}
-            className="bg-amber-100 text-amber-900 px-4 py-2 rounded-full font-bold text-base sm:text-lg flex items-center gap-2 cursor-pointer hover:bg-amber-200 transition-colors shadow-xs"
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowStreakModal(true)}
+            className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white px-4 py-2 rounded-full font-extrabold text-base sm:text-lg flex items-center gap-2 cursor-pointer shadow-md shadow-orange-300/50 hover:shadow-lg transition-all"
           >
-            <span className="text-xl sm:text-2xl">🔥</span>
+            <motion.span 
+              animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+              className="text-xl sm:text-2xl"
+            >
+              🔥
+            </motion.span>
             <span>{progress.current_streak} DAY STREAK</span>
-          </div>
+          </motion.div>
           <div 
             onClick={() => onNavigate('rewards')}
             className="text-stone-500 font-bold uppercase tracking-widest text-xs sm:text-sm pl-1 cursor-pointer hover:text-stone-700 transition-colors"
@@ -323,6 +351,50 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
           />
         </div>
       </div>
+
+      {/* Celebratory Streak Banner with Framer Motion */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.01 }}
+        onClick={() => setShowStreakModal(true)}
+        className="relative bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-[28px] p-5 sm:p-6 text-white shadow-lg shadow-orange-200 cursor-pointer overflow-hidden group"
+      >
+        <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+        
+        <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 text-center sm:text-left">
+            <motion.div
+              animate={{ scale: [1, 1.15, 1], rotate: [0, 8, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white text-orange-600 flex items-center justify-center shrink-0 shadow-md"
+            >
+              <Flame className="w-9 h-9 fill-orange-500 text-orange-600" />
+            </motion.div>
+            <div>
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-xs uppercase font-extrabold tracking-wider text-amber-100">
+                <Sparkles className="w-4 h-4 text-amber-200" />
+                <span>ROUTINE STREAK THRESHOLD</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-serif font-black tracking-tight mt-0.5">
+                {progress.current_streak}-Day Active Streak Milestone! 🔥
+              </h3>
+              <p className="text-amber-50 text-sm mt-1 max-w-xl font-medium">
+                Outstanding consistency, {senior.name.split(' ')[0]}! Tap to view your streak celebration badge & rewards.
+              </p>
+            </div>
+          </div>
+
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-white text-stone-900 font-extrabold text-sm sm:text-base px-5 py-3 rounded-2xl shadow-md shrink-0 flex items-center gap-2 group-hover:bg-amber-50 transition-colors"
+          >
+            <span>Celebrate Streak 🎉</span>
+            <ChevronRight className="w-4 h-4 text-orange-600" />
+          </motion.div>
+        </div>
+      </motion.div>
 
       {/* ========================================================================= */}
       {/* SECTION 1: THE DAILY WALK SECTION                                         */}
@@ -477,9 +549,6 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
               Daily Schedule (After Morning Walk)
             </h2>
           </div>
-          <p className="text-sm text-stone-500">
-            Each task automatically notifies <strong className="text-stone-800 font-bold">9561442888</strong> upon completion.
-          </p>
         </div>
 
         {/* Step-by-Step Sequence Cards */}
@@ -543,16 +612,6 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
                       <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-stone-400">
                         <Clock className="w-3.5 h-3.5 text-stone-400" />
                         <span>Scheduled: {task.time}</span>
-                        {isMeal && (
-                          <span className="text-[#FF6321] text-xs font-bold ml-1">
-                            • Tap to write what you ate ✍️
-                          </span>
-                        )}
-                        {isMedicine && (
-                          <span className="text-emerald-700 text-xs font-bold ml-1">
-                            • Tap to view dosage & send to child 💊
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -626,36 +685,6 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
         </div>
       </div>
 
-      {/* WhatsApp Redirect Status Card Banner */}
-      <div className="bg-[#FAF8F5] border border-stone-200 rounded-[28px] p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#25D366] text-white flex items-center justify-center text-2xl shrink-0 shadow-xs">
-            <MessageCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-base font-bold text-stone-900 flex items-center gap-2">
-              <span>Automatic Guardian WhatsApp Notifications</span>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-mono font-bold">
-                ACTIVE
-              </span>
-            </div>
-            <p className="text-stone-500 text-xs sm:text-sm mt-0.5">
-              All walk, yoga, meal & medicine updates instantly route to <strong className="text-stone-800 font-semibold">{senior.guardian_phone || DEFAULT_GUARDIAN_PHONE}</strong> with one-tap confirmation.
-            </p>
-          </div>
-        </div>
-
-        <a
-          href={`https://api.whatsapp.com/send?phone=919561442888&text=${encodeURIComponent(`Hello David! Eleanor is safe and following her KinCare daily wellness routine.`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 text-xs font-bold px-4 py-2 rounded-xl transition-colors shadow-2xs shrink-0"
-        >
-          <span>Chat with Guardian</span>
-          <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
-        </a>
-      </div>
-
       {/* Emergency SOS Button */}
       <div className="pt-2">
         <button
@@ -669,6 +698,16 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
           <span>CALL FOR HELP (9561442888)</span>
         </button>
       </div>
+
+      {/* Streak Celebration Modal with Framer Motion */}
+      <StreakCelebrationModal
+        isOpen={showStreakModal}
+        onClose={() => setShowStreakModal(false)}
+        streakDays={progress.current_streak}
+        seniorName={senior.name}
+        guardianPhone={senior.guardian_phone || DEFAULT_GUARDIAN_PHONE}
+        totalXp={progress.total_xp}
+      />
     </div>
   );
 };

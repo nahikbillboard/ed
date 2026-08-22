@@ -15,7 +15,12 @@ import confetti from 'canvas-confetti';
 import { ApiClient } from '../../services/apiClient';
 import { playChime, speakText } from '../../utils/audioSpeech';
 import { Senior, Medicine, DailyRoutine, SeniorProgress } from '../../types';
-import { redirectMedicineWithWhatsApp } from '../../utils/whatsappHelper';
+import { 
+  redirectMedicineWithWhatsApp,
+  formatWhatsAppPhone,
+  buildWhatsAppMedicineMessage 
+} from '../../utils/whatsappHelper';
+import { MessageCircle, ExternalLink } from 'lucide-react';
 
 interface SeniorSingleMedicineProps {
   medicineNumber: 1 | 2 | 3;
@@ -141,6 +146,14 @@ export const SeniorSingleMedicine: React.FC<SeniorSingleMedicineProps> = ({
 
     const chosenNote = note.trim() || 'Taken on time with water';
 
+    // Synchronously pre-open tab in click event loop to bypass popup blocking
+    let waWin: Window | null = null;
+    try {
+      waWin = window.open('about:blank', '_blank');
+    } catch (e) {
+      console.warn('Pre-open popup blocked:', e);
+    }
+
     try {
       // 1. Record medicine in backend
       const res = await ApiClient.takeMedicine(med.id, senior.id);
@@ -174,7 +187,8 @@ export const SeniorSingleMedicine: React.FC<SeniorSingleMedicineProps> = ({
         med.dosage_information,
         senior.name,
         chosenNote,
-        targetPhone
+        targetPhone,
+        waWin
       );
     } catch (err) {
       console.error('Failed to complete medicine:', err);
@@ -185,7 +199,8 @@ export const SeniorSingleMedicine: React.FC<SeniorSingleMedicineProps> = ({
         med.dosage_information,
         senior.name,
         chosenNote,
-        targetPhone
+        targetPhone,
+        waWin
       );
       setSentSuccess(true);
     } finally {
@@ -358,9 +373,20 @@ export const SeniorSingleMedicine: React.FC<SeniorSingleMedicineProps> = ({
         >
           <Send className="w-5 h-5 text-stone-950" />
           <span>
-            {loading ? 'Sending to Child...' : 'Send to Child'}
+            {loading ? 'Sending to Child...' : 'Send to Child & Open WhatsApp'}
           </span>
         </button>
+
+        <a
+          href={`https://api.whatsapp.com/send?phone=${formatWhatsAppPhone('9561442888')}&text=${encodeURIComponent(buildWhatsAppMedicineMessage(medicineNumber, med.name, med.dosage_information, senior.name, note))}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-3.5 px-6 bg-[#075E54] hover:bg-[#054c44] text-white text-base font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+        >
+          <MessageCircle className="w-5 h-5 fill-current" />
+          <span>Open WhatsApp Chat with Child (+91 9561442888)</span>
+          <ExternalLink className="w-4 h-4" />
+        </a>
 
         {sentSuccess && (
           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-4 rounded-xl text-center">

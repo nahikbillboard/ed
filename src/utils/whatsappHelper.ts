@@ -31,6 +31,51 @@ export function formatWhatsAppPhone(phone: string = DEFAULT_GUARDIAN_PHONE): str
 }
 
 /**
+ * Safely opens a WhatsApp URL without ever navigating the main frame (which causes X-Frame-Options errors in iframes)
+ */
+export function openWhatsAppSafely(url: string, preOpenedWindow?: Window | null): boolean {
+  if (!url) return false;
+
+  // 1. If a window was pre-opened synchronously during user click event:
+  if (preOpenedWindow && !preOpenedWindow.closed) {
+    try {
+      preOpenedWindow.location.href = url;
+      preOpenedWindow.focus();
+      return true;
+    } catch (e) {
+      console.warn('Failed to update pre-opened window location:', e);
+    }
+  }
+
+  // 2. Try window.open in a new tab
+  try {
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (win) {
+      win.focus();
+      return true;
+    }
+  } catch (err) {
+    console.warn('window.open failed:', err);
+  }
+
+  // 3. Fallback: Create direct DOM anchor element click
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return true;
+  } catch (err) {
+    console.warn('Anchor element fallback failed:', err);
+  }
+
+  return false;
+}
+
+/**
  * Formats a clean ready message and triggers WhatsApp redirection
  */
 export function buildWhatsAppTaskMessage(taskName: string, seniorName: string, extraDetails?: string): string {
@@ -81,7 +126,8 @@ export function redirectMealWithWhatsApp(
   mealType: 'breakfast' | 'lunch' | 'dinner' | string,
   seniorName: string,
   dishName?: string,
-  phone: string = DEFAULT_GUARDIAN_PHONE
+  phone: string = DEFAULT_GUARDIAN_PHONE,
+  preOpenedWindow?: Window | null
 ): { url: string; message: string; targetPhone: string } {
   const cleanPhone = formatWhatsAppPhone(phone);
   const message = buildWhatsAppMealMessage(mealType, seniorName, dishName);
@@ -89,14 +135,7 @@ export function redirectMealWithWhatsApp(
   
   const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
   
-  try {
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!win) {
-      window.location.href = url;
-    }
-  } catch (err) {
-    console.warn('WhatsApp window.open blocked, fallback to href:', err);
-  }
+  openWhatsAppSafely(url, preOpenedWindow);
 
   return { url, message, targetPhone: cleanPhone };
 }
@@ -136,7 +175,8 @@ export function redirectMedicineWithWhatsApp(
   dosage: string,
   seniorName: string,
   notes?: string,
-  phone: string = DEFAULT_GUARDIAN_PHONE
+  phone: string = DEFAULT_GUARDIAN_PHONE,
+  preOpenedWindow?: Window | null
 ): { url: string; message: string; targetPhone: string } {
   const cleanPhone = formatWhatsAppPhone(phone);
   const message = buildWhatsAppMedicineMessage(medNumber, medName, dosage, seniorName, notes);
@@ -144,14 +184,7 @@ export function redirectMedicineWithWhatsApp(
   
   const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
   
-  try {
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!win) {
-      window.location.href = url;
-    }
-  } catch (err) {
-    console.warn('WhatsApp window.open blocked, fallback to href:', err);
-  }
+  openWhatsAppSafely(url, preOpenedWindow);
 
   return { url, message, targetPhone: cleanPhone };
 }
@@ -163,25 +196,17 @@ export function redirectWithWhatsApp(
   taskName: string,
   seniorName: string,
   extraDetails?: string,
-  phone: string = DEFAULT_GUARDIAN_PHONE
+  phone: string = DEFAULT_GUARDIAN_PHONE,
+  preOpenedWindow?: Window | null
 ): { url: string; message: string; targetPhone: string } {
   const cleanPhone = formatWhatsAppPhone(phone);
   const message = buildWhatsAppTaskMessage(taskName, seniorName, extraDetails);
   const encodedText = encodeURIComponent(message);
   
-  // Standard WhatsApp URL compatible with mobile app and WhatsApp Web
   const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
   
-  try {
-    // Attempt popup / new window redirect
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!win) {
-      // Fallback if popup is blocked
-      window.location.href = url;
-    }
-  } catch (err) {
-    console.warn('WhatsApp window.open blocked, fallback to href:', err);
-  }
+  openWhatsAppSafely(url, preOpenedWindow);
 
   return { url, message, targetPhone: cleanPhone };
 }
+

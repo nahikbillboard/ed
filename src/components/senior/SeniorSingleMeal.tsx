@@ -15,8 +15,11 @@ import { playChime, speakText } from '../../utils/audioSpeech';
 import { Senior, DailyRoutine, SeniorProgress } from '../../types';
 import { 
   DEFAULT_GUARDIAN_PHONE, 
-  redirectMealWithWhatsApp 
+  redirectMealWithWhatsApp,
+  formatWhatsAppPhone,
+  buildWhatsAppMealMessage
 } from '../../utils/whatsappHelper';
+import { MessageCircle, ExternalLink } from 'lucide-react';
 
 interface SeniorSingleMealProps {
   mealType: 'breakfast' | 'lunch' | 'dinner';
@@ -148,6 +151,14 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
 
     const chosenDish = dishName.trim() || defaultDishSuggestions[0];
 
+    // Synchronously pre-open tab in click event context to avoid popup blocking
+    let waWin: Window | null = null;
+    try {
+      waWin = window.open('about:blank', '_blank');
+    } catch (e) {
+      console.warn('Pre-open popup blocked:', e);
+    }
+
     try {
       // 1. Log meal to backend database & award XP
       const res = await ApiClient.completeMeal(mealType, senior.id, chosenDish);
@@ -160,11 +171,11 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
       );
 
       // 2. Open WhatsApp directly with ready pre-filled message for 9561442888
-      redirectMealWithWhatsApp(mealType, senior.name, chosenDish, targetPhone);
+      redirectMealWithWhatsApp(mealType, senior.name, chosenDish, targetPhone, waWin);
     } catch (err) {
       console.error('Failed to complete meal:', err);
       // Fallback direct WhatsApp redirection
-      redirectMealWithWhatsApp(mealType, senior.name, chosenDish, targetPhone);
+      redirectMealWithWhatsApp(mealType, senior.name, chosenDish, targetPhone, waWin);
       setSentSuccess(true);
     } finally {
       setLoading(false);
@@ -295,9 +306,20 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
         >
           <Send className="w-5 h-5 text-stone-950" />
           <span>
-            {loading ? 'Sending to Child...' : 'Send to Child'}
+            {loading ? 'Sending to Child...' : 'Send to Child & Open WhatsApp'}
           </span>
         </button>
+
+        <a
+          href={`https://api.whatsapp.com/send?phone=${formatWhatsAppPhone('9561442888')}&text=${encodeURIComponent(buildWhatsAppMealMessage(mealType, senior.name, dishName))}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-3.5 px-6 bg-[#075E54] hover:bg-[#054c44] text-white text-base font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+        >
+          <MessageCircle className="w-5 h-5 fill-current" />
+          <span>Open WhatsApp Chat with Child (+91 9561442888)</span>
+          <ExternalLink className="w-4 h-4" />
+        </a>
 
         {sentSuccess && (
           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-4 rounded-xl text-center">
