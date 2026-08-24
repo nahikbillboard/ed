@@ -1,6 +1,36 @@
 import { TodayBundle, Senior, DailyRoutine, DailyActivity, SeniorProgress, Medicine, ExerciseLibraryItem, Reward, NotificationItem, VoiceCallItem, SosEvent } from '../types';
 
 const LOCAL_STORAGE_KEY = 'kincare_local_bundle_v1';
+const SYNC_CHANNEL_NAME = 'edheal_kincare_browser_sync';
+
+// Cross-tab browser synchronization channel
+let syncChannel: BroadcastChannel | null = null;
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  try {
+    syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+  } catch (e) {
+    console.warn('BroadcastChannel not available:', e);
+  }
+}
+
+function broadcastBundleUpdate(bundle: TodayBundle) {
+  try {
+    if (syncChannel) {
+      syncChannel.postMessage({
+        type: 'EDHEAL_BUNDLE_UPDATED',
+        bundle,
+        timestamp: Date.now(),
+      });
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('edheal_bundle_sync', { detail: bundle })
+      );
+    }
+  } catch (e) {
+    console.warn('Error broadcasting bundle update:', e);
+  }
+}
 
 function getLocalBundle(): TodayBundle {
   try {
@@ -249,12 +279,72 @@ function getLocalBundle(): TodayBundle {
 function saveLocalBundle(bundle: TodayBundle) {
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(bundle));
+    broadcastBundleUpdate(bundle);
   } catch (e) {
     console.warn('Failed to persist local bundle to localStorage:', e);
   }
 }
 
 export class ApiClient {
+  /**
+   * Subscribes to real-time browser storage and cross-tab BroadcastChannel sync updates.
+   * Enables the Guardian Dashboard to update in real-time when the Senior app modifies data.
+   */
+  public static subscribeToSyncUpdates(callback: (bundle: TodayBundle) => void): () => void {
+    if (typeof window === 'undefined') return () => {};
+
+    // 1. BroadcastChannel message from other tabs / windows
+    const handleBroadcast = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'EDHEAL_BUNDLE_UPDATED' && event.data.bundle) {
+        callback(event.data.bundle);
+      }
+    };
+
+    if (syncChannel) {
+      syncChannel.addEventListener('message', handleBroadcast);
+    }
+
+    // 2. Storage event from other tabs
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === LOCAL_STORAGE_KEY && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          if (parsed && parsed.senior) {
+            callback(parsed);
+          }
+        } catch (e) {
+          console.warn('Error parsing storage event update:', e);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // 3. Custom event within same tab
+    const handleCustomSync = (event: Event) => {
+      const customEvt = event as CustomEvent;
+      if (customEvt.detail) {
+        callback(customEvt.detail);
+      }
+    };
+    window.addEventListener('edheal_bundle_sync', handleCustomSync);
+
+    return () => {
+      if (syncChannel) {
+        syncChannel.removeEventListener('message', handleBroadcast);
+      }
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('edheal_bundle_sync', handleCustomSync);
+    };
+  }
+
+  /**
+   * Broadcasts a ping to verify multi-tab sync connectivity
+   */
+  public static pingSync(): void {
+    const current = getLocalBundle();
+    broadcastBundleUpdate(current);
+  }
+
   private static async request<T>(endpoint: string, options: RequestInit = {}): Promise<{ success: boolean; data: T; message?: string }> {
     try {
       const res = await fetch(endpoint, {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, PhoneCall, Bot, Wrench, Volume2, VolumeX, Languages } from 'lucide-react';
+import { Heart, PhoneCall, Bot, Wrench, Volume2, VolumeX, Languages, Shield, User, ExternalLink } from 'lucide-react';
 import { useAudioLanguage } from '../../context/LanguageContext';
 import { Senior } from '../../types';
 
@@ -15,7 +15,9 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  currentView,
   onSelectView,
+  senior,
   onOpenSos,
   onOpenCompanionChat,
   onOpenDemoDrawer,
@@ -24,9 +26,14 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { language, toggleLanguage } = useAudioLanguage();
 
+  const handleOpenGuardianNewTab = () => {
+    const guardianUrl = `${window.location.origin}${window.location.pathname}?role=guardian`;
+    window.open(guardianUrl, '_blank');
+  };
+
   return (
     <header id="main-app-header" className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-md border-b border-stone-800 text-white px-4 py-3 sm:px-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
         {/* Brand & Tagline */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelectView('senior')}>
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center shadow-md">
@@ -37,14 +44,54 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-xl font-black tracking-tight text-white">KinCare</span>
               <span className="text-xs bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/30">AI</span>
             </div>
-            <p className="text-xs text-stone-400 font-medium hidden sm:block">
-              “Care, even when you're far away.”
+            <p className="text-xs text-stone-400 font-medium hidden md:block">
+              “Care, even when you're far away.” • Edheal Engine
             </p>
           </div>
         </div>
 
+        {/* Center: Senior vs Guardian Portal Switcher */}
+        <div className="flex items-center bg-stone-800 p-1 rounded-2xl border border-stone-700 text-xs sm:text-sm font-bold">
+          <button
+            id="nav-switch-senior"
+            onClick={() => onSelectView('senior')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+              currentView === 'senior'
+                ? 'bg-[#FF6321] text-white shadow-xs'
+                : 'text-stone-300 hover:text-white'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            <span>Senior App ({senior?.name || 'सुनीता'})</span>
+          </button>
+
+          <button
+            id="nav-switch-guardian"
+            onClick={() => onSelectView('guardian')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
+              currentView === 'guardian'
+                ? 'bg-amber-500 text-stone-950 font-black shadow-xs'
+                : 'text-stone-300 hover:text-white'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Guardian Portal</span>
+          </button>
+        </div>
+
         {/* Right Tools & SOS */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Open Guardian in Separate Tab */}
+          <button
+            id="header-open-guardian-tab"
+            onClick={handleOpenGuardianNewTab}
+            className="hidden lg:flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white px-3 py-2 rounded-xl border border-stone-700 text-xs font-semibold transition-colors cursor-pointer"
+            title="Open Guardian portal in a new browser tab for live multi-window sync"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+            <span>Guardian Tab</span>
+          </button>
+
           {/* Audio Language Toggle */}
           <button
             id="header-audio-language-toggle"
@@ -89,4 +136,5 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+
 

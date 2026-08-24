@@ -31,7 +31,29 @@ import { TodayBundle, Senior, VoiceCallItem, NotificationItem, DailyRoutine, Dai
 import { Heart, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 
 export function App() {
-  const [role, setRole] = useState<'senior' | 'guardian' | 'onboarding'>('senior');
+  // Check for Guardian subdomain or URL parameters (e.g. https://Edheal.netlify.app/?role=guardian)
+  const initialRole = (() => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search.toLowerCase();
+      const host = window.location.hostname.toLowerCase();
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+
+      if (
+        search.includes('role=guardian') ||
+        search.includes('portal=guardian') ||
+        search.includes('view=guardian') ||
+        host.startsWith('guardian.') ||
+        path.startsWith('/guardian') ||
+        hash.includes('guardian')
+      ) {
+        return 'guardian';
+      }
+    }
+    return 'senior';
+  })();
+
+  const [role, setRole] = useState<'senior' | 'guardian' | 'onboarding'>(initialRole);
   const [seniorSubView, setSeniorSubView] = useState<'home' | 'wakeup' | 'walking' | 'breathing' | 'yoga' | 'meals' | 'medicines' | 'rewards' | 'breakfast' | 'lunch' | 'dinner' | 'breakfast_medicine' | 'lunch_medicine' | 'dinner_medicine'>('home');
   const [guardianSubView, setGuardianSubView] = useState<'dashboard' | 'medicines' | 'settings'>('dashboard');
 
@@ -65,13 +87,25 @@ export function App() {
 
   useEffect(() => {
     loadData();
-    // Periodic refresh every 12 seconds for live telemetry
+
+    // Subscribe to cross-tab & browser storage synchronization
+    const unsubscribeSync = ApiClient.subscribeToSyncUpdates((updatedBundle) => {
+      if (updatedBundle && updatedBundle.senior) {
+        setBundle(updatedBundle);
+      }
+    });
+
+    // Periodic refresh every 10 seconds as fallback
     const interval = setInterval(() => {
       if (bundle?.senior?.id) {
         loadData(bundle.senior.id);
       }
-    }, 12000);
-    return () => clearInterval(interval);
+    }, 10000);
+
+    return () => {
+      unsubscribeSync();
+      clearInterval(interval);
+    };
   }, [loadData, bundle?.senior?.id]);
 
   // Voice call trigger handler (from Demo drawer or Guardian)
