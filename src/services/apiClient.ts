@@ -1,7 +1,7 @@
 import { TodayBundle, Senior, DailyRoutine, DailyActivity, SeniorProgress, Medicine, ExerciseLibraryItem, Reward, NotificationItem, VoiceCallItem, SosEvent } from '../types';
 
-const LOCAL_STORAGE_KEY = 'kincare_local_bundle_v1';
-const SYNC_CHANNEL_NAME = 'edheal_kincare_browser_sync';
+const LOCAL_STORAGE_KEY = 'sath_local_bundle_v1';
+const SYNC_CHANNEL_NAME = 'edheal_sath_browser_sync';
 
 // Cross-tab browser synchronization channel
 let syncChannel: BroadcastChannel | null = null;
@@ -34,14 +34,14 @@ function broadcastBundleUpdate(bundle: TodayBundle) {
 
 function getLocalBundle(): TodayBundle {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY) || localStorage.getItem('kincare_local_bundle_v1');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.senior && parsed.routine) {
         if (parsed.senior.name === 'Eleanor Vance' || parsed.senior.name === 'Eleanor') {
           parsed.senior.name = 'Sunita';
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
         }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
         return parsed;
       }
     }
@@ -362,7 +362,7 @@ export class ApiClient {
       }
       throw new Error(`Server returned status ${res.status}`);
     } catch (err: any) {
-      console.warn(`[KinCare Offline Mode] Backend API unreachable on [${endpoint}]. Using client-side state.`, err.message || err);
+      console.warn(`[Sath Offline Mode] Backend API unreachable on [${endpoint}]. Using client-side state.`, err.message || err);
       throw err;
     }
   }
@@ -378,6 +378,10 @@ export class ApiClient {
     } catch (err) {
       // Offline / Netlify static fallback
     }
+    return getLocalBundle();
+  }
+
+  public static getLocalBundle(): TodayBundle {
     return getLocalBundle();
   }
 
@@ -673,7 +677,6 @@ export class ApiClient {
         method: 'POST',
         body: JSON.stringify({ refillId, medicineId, quantityToAdd }),
       });
-      return;
     } catch (e) {
       // Offline fallback
     }
@@ -681,6 +684,49 @@ export class ApiClient {
     const med = bundle.medicines.find(m => m.id === medicineId);
     if (med) {
       med.quantity_remaining += quantityToAdd;
+      
+      // Add notification for refill
+      bundle.recentNotifications.unshift({
+        id: `notif_refill_${Date.now()}`,
+        senior_id: bundle.senior.id,
+        channel: 'push',
+        title: `💊 Pharmacy Refill Dispatched: ${med.name}`,
+        message: `30 doses ordered and added to inventory. Current stock: ${med.quantity_remaining} tablets.`,
+        status: 'delivered',
+        created_at: new Date().toISOString(),
+      });
+
+      saveLocalBundle(bundle);
+    }
+  }
+
+  public static async updateMedicineQuantity(medicineId: string, quantity: number): Promise<void> {
+    try {
+      await this.request(`/api/medicines/${medicineId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity_remaining: quantity }),
+      });
+    } catch (e) {
+      // Offline fallback
+    }
+    const bundle = getLocalBundle();
+    const med = bundle.medicines.find(m => m.id === medicineId);
+    if (med) {
+      med.quantity_remaining = quantity;
+
+      if (quantity <= 3) {
+        // Push notification item for low stock alert
+        bundle.recentNotifications.unshift({
+          id: `notif_low_${Date.now()}`,
+          senior_id: bundle.senior.id,
+          channel: 'push',
+          title: `🚨 Push Alert: Low Inventory (${med.name})`,
+          message: `Supply dropped to ${quantity} doses (< 3-day supply). Immediate pharmacy refill requested.`,
+          status: 'delivered',
+          created_at: new Date().toISOString(),
+        });
+      }
+
       saveLocalBundle(bundle);
     }
   }

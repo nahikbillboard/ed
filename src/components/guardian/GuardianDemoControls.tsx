@@ -41,8 +41,12 @@ export const GuardianDemoControls: React.FC<GuardianDemoControlsProps> = ({
         setStatusMessage('Simulated Meal Reminder Call Dispatched!');
         onEventDispatched(call);
       } else if (eventType === 'low_stock') {
-        await ApiClient.triggerDemoEvent(senior.id, 'low_stock_med_01');
-        setStatusMessage('Lisinopril inventory lowered to 2 tablets (Low Stock Triggered)!');
+        // Trigger low stock (< 3-day supply) for medicine #1
+        const bundle = ApiClient.getLocalBundle();
+        const firstMed = bundle.medicines[0] || { id: 'med_01', name: 'Cardioprotect (Lisinopril)' };
+        await ApiClient.updateMedicineQuantity(firstMed.id, 2);
+        setStatusMessage(`🚨 ${firstMed.name} inventory lowered to 2 doses (< 3-day supply)! Push alert triggered on Guardian Dashboard.`);
+        playChime('alert');
         onEventDispatched();
       } else if (eventType === 'sos_alert') {
         const sos = await ApiClient.triggerSos(senior.id);

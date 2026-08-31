@@ -9,6 +9,7 @@ import { GuardianDemoControls } from './components/guardian/GuardianDemoControls
 
 // Senior Views
 import { SeniorHome } from './components/senior/SeniorHome';
+import { SeniorOnePageFlow } from './components/senior/SeniorOnePageFlow';
 import { SeniorWakeUp } from './components/senior/SeniorWakeUp';
 import { SeniorWalking } from './components/senior/SeniorWalking';
 import { SeniorBreathing } from './components/senior/SeniorBreathing';
@@ -54,7 +55,7 @@ export function App() {
   })();
 
   const [role, setRole] = useState<'senior' | 'guardian' | 'onboarding'>(initialRole);
-  const [seniorSubView, setSeniorSubView] = useState<'home' | 'wakeup' | 'walking' | 'breathing' | 'yoga' | 'meals' | 'medicines' | 'rewards' | 'breakfast' | 'lunch' | 'dinner' | 'breakfast_medicine' | 'lunch_medicine' | 'dinner_medicine'>('home');
+  const [seniorSubView, setSeniorSubView] = useState<'home' | 'onepage' | 'wakeup' | 'walking' | 'breathing' | 'yoga' | 'meals' | 'medicines' | 'rewards' | 'breakfast' | 'lunch' | 'dinner' | 'breakfast_medicine' | 'lunch_medicine' | 'dinner_medicine'>('home');
   const [guardianSubView, setGuardianSubView] = useState<'dashboard' | 'medicines' | 'settings'>('dashboard');
 
   const [bundle, setBundle] = useState<TodayBundle | null>(null);
@@ -79,7 +80,7 @@ export function App() {
       setError(null);
     } catch (err: any) {
       console.error('Failed to load bundle:', err);
-      setError('Unable to reach KinCare server. Reconnecting...');
+      setError('Unable to reach Sath server. Reconnecting...');
     } finally {
       setLoading(false);
     }
@@ -201,7 +202,7 @@ export function App() {
         <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center shadow-2xl animate-bounce">
           <Heart className="w-9 h-9 text-white fill-white" />
         </div>
-        <h2 className="text-3xl font-black tracking-tight">KinCare AI</h2>
+        <h2 className="text-3xl font-black tracking-tight">Sath AI</h2>
         <p className="text-stone-400 text-lg">“Care, even when you're far away.”</p>
         <div className="flex items-center gap-2 text-amber-400 font-semibold text-sm pt-2">
           <Sparkles className="w-4 h-4 animate-spin" />
@@ -215,7 +216,7 @@ export function App() {
     return (
       <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center p-6 text-stone-900 text-center space-y-4">
         <AlertCircle className="w-12 h-12 text-red-500" />
-        <h2 className="text-2xl font-bold">KinCare Connecting...</h2>
+        <h2 className="text-2xl font-bold">Sath Connecting...</h2>
         <p className="text-stone-600">{error || 'Initializing telemetry database.'}</p>
         <button
           onClick={() => loadData()}
@@ -229,7 +230,7 @@ export function App() {
   }
 
   return (
-    <div id="kincare-app-root" className="min-h-screen bg-[#FDFCF8] text-stone-800 font-sans flex flex-col antialiased selection:bg-orange-100 selection:text-stone-900">
+    <div id="sath-app-root" className="min-h-screen bg-[#FDFCF8] text-stone-800 font-sans flex flex-col antialiased selection:bg-orange-100 selection:text-stone-900">
       {/* Header */}
       <Header
         currentView={role}
@@ -244,6 +245,15 @@ export function App() {
         onOpenDemoDrawer={() => setIsDemoDrawerOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
+        isOnePageActive={role === 'senior' && seniorSubView === 'onepage'}
+        onToggleOnePageMode={() => {
+          if (role === 'senior' && seniorSubView === 'onepage') {
+            setSeniorSubView('home');
+          } else {
+            setRole('senior');
+            setSeniorSubView('onepage');
+          }
+        }}
       />
 
       {/* Main Content View Switcher */}
@@ -252,7 +262,7 @@ export function App() {
         {role === 'senior' && (
           <div>
             {/* Sub Navigation Bar for Senior Mode */}
-            {seniorSubView !== 'home' && (
+            {seniorSubView !== 'home' && seniorSubView !== 'onepage' && (
               <div className="max-w-4xl mx-auto px-4 sm:px-6 mb-4 flex items-center justify-between">
                 <button
                   id="senior-back-home-btn"
@@ -277,6 +287,37 @@ export function App() {
                 progress={bundle.progress}
                 medicines={bundle.medicines}
                 onNavigate={(view) => setSeniorSubView(view)}
+                onOpenSos={() => setIsSosOpen(true)}
+                onTaskCompleted={(updatedRoutine, updatedProg, whatsappData) => {
+                  setBundle({
+                    ...bundle,
+                    routine: updatedRoutine,
+                    progress: updatedProg,
+                  });
+                  if (whatsappData) {
+                    setActiveWhatsApp({
+                      id: `notif_w_${Date.now()}`,
+                      senior_id: bundle.senior.id,
+                      channel: 'whatsapp',
+                      title: `✅ Routine Update: ${bundle.senior.name}`,
+                      message: whatsappData.message || 'Routine task completed.',
+                      status: 'delivered',
+                      created_at: new Date().toISOString(),
+                    });
+                    setIsWhatsAppOpen(true);
+                  }
+                }}
+              />
+            )}
+
+            {seniorSubView === 'onepage' && (
+              <SeniorOnePageFlow
+                senior={bundle.senior}
+                routine={bundle.routine}
+                activity={bundle.activity}
+                progress={bundle.progress}
+                medicines={bundle.medicines}
+                onNavigateHome={() => setSeniorSubView('home')}
                 onOpenSos={() => setIsSosOpen(true)}
                 onTaskCompleted={(updatedRoutine, updatedProg, whatsappData) => {
                   setBundle({

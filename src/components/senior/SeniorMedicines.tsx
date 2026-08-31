@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Pill, CheckCircle2, BellRing, AlertTriangle, Clock, Sparkles, Send, ArrowLeft } from 'lucide-react';
+import { Pill, CheckCircle2, BellRing, AlertTriangle, Clock, Sparkles, Check, ArrowLeft } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ApiClient } from '../../services/apiClient';
 import { playChime, speakText } from '../../utils/audioSpeech';
 import { Senior, Medicine, DailyRoutine, SeniorProgress } from '../../types';
-import { redirectMedicineWithWhatsApp } from '../../utils/whatsappHelper';
 
 interface SeniorMedicinesProps {
   senior: Senior;
@@ -30,8 +29,6 @@ export const SeniorMedicines: React.FC<SeniorMedicinesProps> = ({
   });
   const [snoozedStatus, setSnoozedStatus] = useState<Record<string, boolean>>({});
   const [loadingMedId, setLoadingMedId] = useState<string | null>(null);
-
-  const targetPhone = '9561442888';
 
   const handleTakeAndSendToChild = async (med: Medicine) => {
     setLoadingMedId(med.id);
@@ -60,28 +57,10 @@ export const SeniorMedicines: React.FC<SeniorMedicinesProps> = ({
         medicine: med.name,
       });
 
-      speakText(`दवाई नंबर ${med.medicine_number}, ${med.name}, दर्ज हो गई है और आपके बच्चे को व्हाट्सएप पर भेज दी गई है।`);
-
-      // Open WhatsApp directly for 9561442888
-      redirectMedicineWithWhatsApp(
-        med.medicine_number,
-        med.name,
-        med.dosage_information,
-        senior.name,
-        'Taken on time with water',
-        targetPhone
-      );
+      speakText(`दवाई नंबर ${med.medicine_number}, ${med.name}, दर्ज हो गई है और गार्जियन ऐप पर लाइव अपडेट हो गई है।`);
     } catch (e) {
       console.error('Failed to log medicine:', e);
       setTakenStatus(prev => ({ ...prev, [med.id]: true }));
-      redirectMedicineWithWhatsApp(
-        med.medicine_number,
-        med.name,
-        med.dosage_information,
-        senior.name,
-        'Taken on time with water',
-        targetPhone
-      );
     } finally {
       setLoadingMedId(null);
     }
@@ -215,10 +194,10 @@ export const SeniorMedicines: React.FC<SeniorMedicinesProps> = ({
                       id={`btn-send-to-child-med-${med.medicine_number}`}
                       onClick={() => handleTakeAndSendToChild(med)}
                       disabled={isLoading}
-                      className="flex-1 py-4.5 px-6 bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-stone-950 text-lg font-bold rounded-2xl shadow-md shadow-emerald-900/10 flex items-center justify-center gap-3 transition-all disabled:opacity-50 cursor-pointer"
+                      className="flex-1 py-4.5 px-6 bg-[#FF6321] hover:bg-[#e85516] active:scale-98 text-white text-lg font-bold rounded-2xl shadow-md shadow-orange-900/10 flex items-center justify-center gap-3 transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      <Send className="w-5 h-5 text-stone-950" />
-                      <span>{isLoading ? 'Sending to Child...' : 'Send to Child'}</span>
+                      <Check className="w-6 h-6 text-white" />
+                      <span>{isLoading ? 'Saving...' : 'Done ✓ (पूरा हुआ)'}</span>
                     </button>
 
                     <button
@@ -234,17 +213,8 @@ export const SeniorMedicines: React.FC<SeniorMedicinesProps> = ({
                   <div className="w-full flex items-center justify-between bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
                     <div className="flex items-center gap-2.5 text-emerald-900 font-bold text-base sm:text-lg">
                       <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                      <span>Confirmed & Sent to Child (9561442888) ✓ (+40 XP)</span>
+                      <span>Medicine Confirmed & Synced with Guardian App ✓ (+40 XP)</span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => redirectMedicineWithWhatsApp(med.medicine_number, med.name, med.dosage_information, senior.name, 'Taken on time with water', targetPhone)}
-                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Resend</span>
-                    </button>
                   </div>
                 )}
               </div>

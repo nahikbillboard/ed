@@ -1,4 +1,4 @@
-// Elder-friendly Audio Speech & Synthesis System for KinCare
+// Elder-friendly Audio Speech & Synthesis System for Sath
 // Provides natural Hindi & English speech synthesis with fallback chimes
 
 export type AudioLanguage = 'hi' | 'en';
@@ -224,10 +224,10 @@ export function convertToHindiSpeech(input: string): string {
     return `${name} जी को कॉल किया जा रहा है। आपके परिवार और सहायकों को सूचित कर दिया गया है।`;
   }
 
-  if (/Welcome to KinCare,?\s*(.+?)!\s*Your daily companion/i.test(text)) {
-    const match = text.match(/Welcome to KinCare,?\s*(.+?)!\s*Your daily companion/i);
+  if (/Welcome to Sath,?\s*(.+?)!\s*Your daily companion/i.test(text)) {
+    const match = text.match(/Welcome to Sath,?\s*(.+?)!\s*Your daily companion/i);
     const name = match ? match[1] : '';
-    return `किनकेयर में आपका स्वागत है, ${name} जी! आपका दैनिक साथी सेटअप पूरा हो गया है।`;
+    return `साथ में आपका स्वागत है, ${name} जी! आपका दैनिक साथी सेटअप पूरा हो गया है।`;
   }
 
   if (/Refill order placed for\s*(.+?)\.\s*30 doses/i.test(text)) {

@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Trophy, Award, Sparkles, MessageCircle, X, ExternalLink, Heart, ShieldCheck } from 'lucide-react';
+import { Flame, Trophy, Award, Sparkles, X, Heart, ShieldCheck, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playChime, speakText } from '../../utils/audioSpeech';
-import { redirectWithWhatsApp, DEFAULT_GUARDIAN_PHONE, formatWhatsAppPhone } from '../../utils/whatsappHelper';
+import { DEFAULT_GUARDIAN_PHONE } from '../../utils/whatsappHelper';
 
 interface StreakCelebrationModalProps {
   isOpen: boolean;
@@ -113,18 +113,6 @@ export const StreakCelebrationModal: React.FC<StreakCelebrationModalProps> = ({
   const milestone = getMilestoneInfo(streakDays);
   const firstName = seniorName.split(' ')[0];
 
-  const handleShareStreak = () => {
-    const text = `🎉 *KinCare Celebration!* ${seniorName} has achieved a *${streakDays}-Day Wellness Streak*! 🔥\n\nDaily walks, routine check-ins, meals, and medicines are completely on track. Total Wellness XP: ${totalXp}.`;
-    const cleanPhone = formatWhatsAppPhone(guardianPhone);
-    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`;
-    
-    try {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (e) {
-      window.location.href = url;
-    }
-  };
-
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-md overflow-y-auto">
@@ -228,7 +216,7 @@ export const StreakCelebrationModal: React.FC<StreakCelebrationModalProps> = ({
             <div className="flex items-center gap-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-sm">
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>
-                Streak milestone update ready for guardian <strong>({guardianPhone})</strong>.
+                Streak milestone automatically synced with Guardian Portal <strong>({guardianPhone})</strong> ✓
               </span>
             </div>
 
@@ -237,20 +225,12 @@ export const StreakCelebrationModal: React.FC<StreakCelebrationModalProps> = ({
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleShareStreak}
-                className="w-full py-4 px-6 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg rounded-2xl shadow-lg flex items-center justify-center gap-2.5 transition-all cursor-pointer"
-              >
-                <MessageCircle className="w-6 h-6 fill-current" />
-                <span>Share Celebration on WhatsApp</span>
-                <ExternalLink className="w-4 h-4 opacity-80" />
-              </motion.button>
-
-              <button
                 onClick={onClose}
-                className="w-full py-3.5 px-6 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-base rounded-2xl transition-colors cursor-pointer"
+                className="w-full py-4 px-6 bg-[#FF6321] hover:bg-[#e85516] text-white font-bold text-lg rounded-2xl shadow-lg shadow-orange-900/20 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
               >
-                Keep the Streak Going! 🔥
-              </button>
+                <Check className="w-6 h-6 text-white" />
+                <span>Keep the Streak Going! 🔥</span>
+              </motion.button>
             </div>
           </div>
         </motion.div>

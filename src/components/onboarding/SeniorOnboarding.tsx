@@ -308,7 +308,7 @@ export const SeniorOnboarding: React.FC<SeniorOnboardingProps> = ({ onComplete, 
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-              Ready to Activate KinCare!
+              Ready to Activate Sath!
             </h2>
             <p className="text-stone-500 text-base font-normal">
               We'll activate AI reminder daemons for <strong className="text-stone-800">{formData.name}</strong> and link notifications to <strong className="text-stone-800">{formData.guardian_name}</strong>.

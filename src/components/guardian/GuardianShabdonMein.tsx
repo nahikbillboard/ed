@@ -207,7 +207,7 @@ export const GuardianShabdonMein: React.FC<GuardianShabdonMeinProps> = ({
       ? `📋 *शब्दों में दैनिक रिपोर्ट - ${senior.name}*\n\n`
       : `📋 *Daily Care Narrative - ${senior.name}*\n\n`;
     
-    const fullText = encodeURIComponent(`${headerPrefix}${currentNarrative}\n\n— *Edheal KinCare Browser Engine* (https://Edheal.netlify.app)`);
+    const fullText = encodeURIComponent(`${headerPrefix}${currentNarrative}\n\n— *Edheal Sath Browser Engine* (https://Edheal.netlify.app)`);
     const whatsappUrl = `https://api.whatsapp.com/send?phone=91${senior.guardian_phone}&text=${fullText}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -437,7 +437,7 @@ export const GuardianShabdonMein: React.FC<GuardianShabdonMeinProps> = ({
               <span>सत्यापित समय: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </span>
             <span className="bg-white px-2.5 py-1 rounded-md border border-stone-200 text-stone-600 font-mono text-[11px]">
-              Edheal KinCare Browser Voice Engine
+              Edheal Sath Browser Voice Engine
             </span>
           </div>
         </div>

@@ -97,7 +97,7 @@ export class AIService {
       Keep under 25 words. Simple words, 1 friendly emoji, high warmth.`,
       maxOutputTokens: 60,
       temperature: 0.3,
-      systemInstruction: 'You are KinCare AI, a gentle, respectful companion for elderly seniors. You speak with clear, simple words and warmth.',
+      systemInstruction: 'You are Sath AI, a gentle, respectful companion for elderly seniors. You speak with clear, simple words and warmth.',
     });
 
     const text = result || fallback;
@@ -147,7 +147,7 @@ export class AIService {
       Focus on: "Is my parent safe and on track today?". Clear, reassuring, professional tone.`,
       maxOutputTokens: 90,
       temperature: 0.2,
-      systemInstruction: 'You are KinCare Guardian Intelligence. Provide clear, factual, reassuring updates for families caring for aging parents.',
+      systemInstruction: 'You are Sath Guardian Intelligence. Provide clear, factual, reassuring updates for families caring for aging parents.',
     });
 
     const text = result || fallback;
@@ -177,7 +177,7 @@ export class AIService {
       CRITICAL MEDICAL SAFETY: NEVER diagnose, prescribe, or advise changing medications. If they ask about medical symptoms or prescriptions, gently remind them to speak with their doctor or family.`,
       maxOutputTokens: 80,
       temperature: 0.3,
-      systemInstruction: `You are KinCare AI, a loving, respectful, patient companion for an elderly senior. 
+      systemInstruction: `You are Sath AI, a loving, respectful, patient companion for an elderly senior. 
       Always speak in respectful, warm HINDI (using 'आप', 'जी'). 
       Keep sentences short, clear, and reassuring. 
       STRICT SAFETY RULE: Do NOT diagnose diseases or change prescriptions.`,

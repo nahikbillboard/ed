@@ -34,7 +34,7 @@ interface SeniorHomeProps {
   activity: DailyActivity;
   progress: SeniorProgress;
   medicines: Medicine[];
-  onNavigate: (view: 'wakeup' | 'walking' | 'breathing' | 'yoga' | 'meals' | 'medicines' | 'rewards' | 'breakfast' | 'lunch' | 'dinner' | 'breakfast_medicine' | 'lunch_medicine' | 'dinner_medicine') => void;
+  onNavigate: (view: 'onepage' | 'wakeup' | 'walking' | 'breathing' | 'yoga' | 'meals' | 'medicines' | 'rewards' | 'breakfast' | 'lunch' | 'dinner' | 'breakfast_medicine' | 'lunch_medicine' | 'dinner_medicine') => void;
   onOpenSos: () => void;
   onTaskCompleted?: (updatedRoutine: DailyRoutine, updatedProg: SeniorProgress, whatsappData?: any) => void;
 }
@@ -194,7 +194,7 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
     return `It is ${timeStr} • ${dayStr}`;
   };
 
-  // Direct completion of a routine step with WhatsApp redirect to 9561442888
+  // Direct completion of a routine step with sync to Guardian Portal
   const handleMarkTaskDone = async (task: typeof routineSequence[0], e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setLoadingTask(task.id);
@@ -206,30 +206,17 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
       origin: { y: 0.6 }
     });
 
-    // Synchronously pre-open tab in click event loop to bypass popup blocking
-    let waWin: Window | null = null;
-    try {
-      waWin = window.open('about:blank', '_blank');
-    } catch (err) {
-      console.warn('Pre-open popup blocked:', err);
-    }
-
     try {
       // 1. Update backend routine state & dispatch server notifications
       const res = await ApiClient.completeRoutineTask(senior.id, task.taskType, task.title, task.details);
       
       if (onTaskCompleted) {
-        onTaskCompleted(res.routine, res.progress, res.whatsapp);
+        onTaskCompleted(res.routine, res.progress);
       }
 
       speakText(`शाबाश ${senior.name} जी! ${task.title} सफलतापूर्वक पूरा हो गया है।`);
-
-      // 2. Automatically redirect to WhatsApp with ready message for 9561442888
-      redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } catch (err) {
       console.error('Failed to complete routine task:', err);
-      // Fallback direct redirection even if offline
-      redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } finally {
       setLoadingTask(null);
     }
@@ -241,23 +228,14 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
     playChime('success');
     confetti({ particleCount: 70, spread: 60 });
 
-    let waWin: Window | null = null;
-    try {
-      waWin = window.open('about:blank', '_blank');
-    } catch (err) {
-      console.warn('Pre-open popup blocked:', err);
-    }
-
     try {
       const res = await ApiClient.completeRoutineTask(senior.id, 'walk', 'Daily Walk', `${stepGoal} steps target achieved`);
       if (onTaskCompleted) {
-        onTaskCompleted(res.routine, res.progress, res.whatsapp);
+        onTaskCompleted(res.routine, res.progress);
       }
-      speakText(`बधाई हो ${senior.name} जी! दैनिक वॉक पूरी हो गई है और परिवार को संदेश भेज दिया गया है।`);
-      redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
+      speakText(`बधाई हो ${senior.name} जी! दैनिक वॉक पूरी हो गई है और गार्जियन ऐप पर लाइव अपडेट हो गया है।`);
     } catch (e) {
       console.error('Failed to complete walk:', e);
-      redirectWithWhatsApp('Daily Walk', senior.name, `${stepGoal} steps completed on schedule`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE, waWin);
     } finally {
       setLoadingTask(null);
     }
@@ -330,7 +308,7 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
                 Today's Daily Routine
               </h2>
               <p className="text-stone-500 text-sm">
-                WhatsApp alerts routed automatically to guardian at <strong className="text-stone-800 font-semibold">{senior.guardian_phone || DEFAULT_GUARDIAN_PHONE}</strong>
+                Live updates synced directly with Guardian Portal (<strong className="text-stone-800 font-semibold">{senior.guardian_phone || DEFAULT_GUARDIAN_PHONE}</strong>)
               </p>
             </div>
           </div>
@@ -453,10 +431,10 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
                 <div className="bg-[#FAF8F5] border border-stone-200 rounded-2xl p-3.5 col-span-2 sm:col-span-1">
                   <div className="text-xs uppercase font-bold text-stone-400">Guardian Sync</div>
                   <div className="text-base font-bold text-emerald-700 mt-1 flex items-center gap-1.5">
-                    <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>9561442888</span>
                   </div>
-                  <div className="text-xs text-stone-500">Auto WhatsApp alert</div>
+                  <div className="text-xs text-stone-500">Live Guardian Sync</div>
                 </div>
               </div>
             </div>
@@ -513,13 +491,10 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
                     <span>{loadingTask === 'walk' ? 'Sending...' : 'Mark Done & Notify'}</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={() => redirectWithWhatsApp('Daily Walk', senior.name, `${stepsTaken} steps recorded`, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE)}
-                    className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
-                  >
-                    <Send className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Resend WhatsApp</span>
-                  </button>
+                  <div className="px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs rounded-xl flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Goal Completed ✓</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -647,34 +622,27 @@ export const SeniorHome: React.FC<SeniorHomeProps> = ({
                         disabled={isLoading}
                         className={`flex-1 sm:flex-initial px-5 py-2.5 active:scale-95 text-white font-bold text-sm sm:text-base rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer ${
                           isMedicine
-                            ? 'bg-[#25D366] hover:bg-[#20bd5a] text-stone-950 font-extrabold'
+                            ? 'bg-[#FF6321] hover:bg-[#e85516] text-white font-bold'
                             : 'bg-[#FF6321] hover:bg-[#e85516] text-white'
                         }`}
                       >
                         <Check className="w-5 h-5" />
                         <span>
                           {isLoading 
-                            ? 'Notifying...' 
+                            ? 'Saving...' 
                             : isMeal 
-                            ? 'Log Meal & WhatsApp' 
+                            ? 'Log Meal' 
                             : isMedicine 
-                            ? 'Send to Child' 
-                            : 'Done ✓'}
+                            ? 'Log Medicine' 
+                            : 'Done ✓ (पूरा हुआ)'}
                         </span>
                       </button>
                     ) : (
                       <div className="flex items-center gap-2">
                         <div className="px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs sm:text-sm rounded-xl flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span>Done & Notified ✓</span>
+                          <span>Done & Synced ✓</span>
                         </div>
-                        <button
-                          title="Resend WhatsApp ready message"
-                          onClick={() => redirectWithWhatsApp(task.title, senior.name, task.details, senior.guardian_phone || DEFAULT_GUARDIAN_PHONE)}
-                          className="p-2 bg-stone-100 hover:bg-emerald-100 text-stone-600 hover:text-emerald-800 rounded-xl transition-colors cursor-pointer"
-                        >
-                          <Send className="w-4 h-4" />
-                        </button>
                       </div>
                     )}
                   </div>

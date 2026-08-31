@@ -16,7 +16,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const LANGUAGE_STORAGE_KEY = 'kincare_audio_language';
+const LANGUAGE_STORAGE_KEY = 'sath_audio_language';
 
 interface LanguageProviderProps {
   children: ReactNode;

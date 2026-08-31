@@ -24,6 +24,7 @@ import { ApiClient } from '../../services/apiClient';
 import { playChime } from '../../utils/audioSpeech';
 import { Senior, DailyRoutine, DailyActivity, SeniorProgress, Medicine, NotificationItem, VoiceCallItem, SosEvent } from '../../types';
 import { GuardianShabdonMein } from './GuardianShabdonMein';
+import { PushNotificationAlert } from './PushNotificationAlert';
 
 interface GuardianDashboardProps {
   senior: Senior;
@@ -113,10 +114,12 @@ export const GuardianDashboard: React.FC<GuardianDashboardProps> = ({
     }
   };
 
-  // Determine Overall Status Color
+  // Determine Overall Status Color & Low Supply (< 3 days)
   const hasActiveSos = sosHistory.some(s => s.status === 'active');
+  const criticalLowSupplyMeds = medicines.filter(m => m.enabled && m.quantity_remaining <= 3);
+  const hasCriticalLowSupply = criticalLowSupplyMeds.length > 0;
   const hasLowStock = medicines.some(m => m.quantity_remaining <= m.low_stock_threshold);
-  const isAllGood = !hasActiveSos && routine.wake_status === 'completed';
+  const isAllGood = !hasActiveSos && !hasCriticalLowSupply && routine.wake_status === 'completed';
 
   const getStatusBadge = () => {
     if (hasActiveSos) {
@@ -125,6 +128,14 @@ export const GuardianDashboard: React.FC<GuardianDashboardProps> = ({
         text: 'EMERGENCY TRIGGERED',
         icon: AlertTriangle,
         desc: 'An active SOS alarm was initiated. Review emergency response logs.',
+      };
+    }
+    if (hasCriticalLowSupply) {
+      return {
+        color: 'bg-[#FF6321] text-white',
+        text: 'MEDICINE LOW (< 3-DAY SUPPLY)',
+        icon: AlertTriangle,
+        desc: `${criticalLowSupplyMeds.length} prescription(s) have under 3 days of doses remaining. 1-Click refill required.`,
       };
     }
     if (!isAllGood || hasLowStock) {
@@ -159,53 +170,13 @@ export const GuardianDashboard: React.FC<GuardianDashboardProps> = ({
 
   return (
     <div id="guardian-dashboard" className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
-      {/* Real-time Browser Connected Subdomain Banner */}
-      <div
-        id="edheal-browser-sync-banner"
-        className="bg-stone-900 text-white rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-stone-800 shadow-md"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-            <Radio className={`w-4 h-4 text-emerald-400 ${syncPingActive ? 'animate-ping' : ''}`} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Browser Storage Connected
-              </span>
-              <span className="text-[11px] text-stone-400 bg-stone-800 px-2 py-0.5 rounded border border-stone-700 font-mono">
-                https://Edheal.netlify.app/?role=guardian
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-stone-300 mt-0.5">
-              Live bi-directional sync with {senior.name}'s app. Data is stored securely in the browser and updates in real-time across tabs.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button
-            id="btn-sync-ping-test"
-            onClick={handleTestSyncPing}
-            className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 px-3 py-1.5 rounded-xl text-xs font-semibold border border-stone-700 transition-colors cursor-pointer"
-            title="Test real-time cross-tab browser sync"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncPingActive ? 'animate-spin text-emerald-400' : ''}`} />
-            <span>{syncPingActive ? 'Synced!' : 'Test Live Ping'}</span>
-          </button>
-
-          <button
-            id="btn-open-guardian-tab"
-            onClick={handleOpenGuardianNewTab}
-            className="flex items-center gap-1.5 bg-[#FF6321] hover:bg-[#e85516] text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-            title="Open Guardian App in a separate browser tab to monitor live"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Open Guardian Subdomain Tab</span>
-          </button>
-        </div>
-      </div>
+      {/* AUTOMATED PUSH NOTIFICATION ALERT FOR MEDICINE INVENTORY (< 3-DAY SUPPLY) */}
+      <PushNotificationAlert
+        senior={senior}
+        medicines={medicines}
+        onRefillOrdered={onRefreshData}
+        onNavigateMedicines={onNavigateMedicines}
+      />
 
       {/* Top Banner answering: "Is my parent okay today?" */}
       <div className="bg-[#FAF8F5] border border-stone-200 rounded-[32px] p-6 sm:p-8 text-stone-900 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -276,18 +247,28 @@ export const GuardianDashboard: React.FC<GuardianDashboardProps> = ({
         {/* Medicines Remaining Card */}
         <div 
           onClick={onNavigateMedicines}
-          className="bg-white border border-stone-200 hover:border-emerald-300 rounded-[28px] p-5 shadow-xs space-y-2 cursor-pointer transition-all"
+          className={`bg-white border ${hasCriticalLowSupply ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-stone-200 hover:border-emerald-300'} rounded-[28px] p-5 shadow-xs space-y-2 cursor-pointer transition-all`}
         >
           <div className="flex items-center justify-between text-stone-400">
             <span className="text-xs font-bold uppercase tracking-wider">Prescriptions</span>
-            <Pill className="w-4 h-4 text-emerald-600" />
+            <Pill className={`w-4 h-4 ${hasCriticalLowSupply ? 'text-red-500 animate-bounce' : 'text-emerald-600'}`} />
           </div>
-          <div className="text-2xl sm:text-3xl font-serif font-bold text-stone-900">
-            {medicines.length} Scheduled
+          <div className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 flex items-center gap-2">
+            <span>{medicines.length} Scheduled</span>
           </div>
-          <div className="text-xs text-emerald-800 font-semibold flex items-center gap-1">
-            <span>Manage Refills</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+          <div className="text-xs font-semibold flex items-center justify-between gap-1">
+            {hasCriticalLowSupply ? (
+              <span className="text-red-600 font-bold flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                {criticalLowSupplyMeds.length} Low (&lt; 3 Days)
+              </span>
+            ) : (
+              <span className="text-emerald-800">Supply Healthy</span>
+            )}
+            <span className="text-stone-400 flex items-center">
+              <span>Refill</span>
+              <ChevronRight className="w-3 h-3" />
+            </span>
           </div>
         </div>
 
@@ -426,8 +407,9 @@ export const GuardianDashboard: React.FC<GuardianDashboardProps> = ({
                 <Bell className="w-5 h-5 text-stone-500" />
                 <span>Guardian Notification Stream</span>
               </div>
-              <span className="text-xs font-semibold bg-stone-100 text-stone-700 px-3 py-1 rounded-full">
-                WhatsApp & Push
+              <span className="text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Live Synced</span>
               </span>
             </div>
 

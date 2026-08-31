@@ -35,7 +35,8 @@ interface DatabaseSchema {
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'kincare_db.json');
+const DB_FILE = path.join(DATA_DIR, 'sath_db.json');
+const OLD_DB_FILE = path.join(DATA_DIR, 'kincare_db.json');
 
 class DatabaseEngine {
   private data: DatabaseSchema;
@@ -57,9 +58,10 @@ class DatabaseEngine {
   }
 
   private loadOrSeed(): DatabaseSchema {
-    if (fs.existsSync(DB_FILE)) {
+    const fileToRead = fs.existsSync(DB_FILE) ? DB_FILE : (fs.existsSync(OLD_DB_FILE) ? OLD_DB_FILE : null);
+    if (fileToRead) {
       try {
-        const content = fs.readFileSync(DB_FILE, 'utf-8');
+        const content = fs.readFileSync(fileToRead, 'utf-8');
         const parsed = JSON.parse(content);
         if (parsed.seniors && parsed.seniors.length > 0) {
           return parsed;
@@ -108,7 +110,7 @@ class DatabaseEngine {
     const users: User[] = [
       {
         id: seniorUserId,
-        email: 'sunita@kincare.demo',
+        email: 'sunita@sath.demo',
         name: 'Sunita',
         phone: '+91 9561442888',
         role: 'senior',
@@ -116,7 +118,7 @@ class DatabaseEngine {
       },
       {
         id: guardianUserId,
-        email: 'guardian@kincare.demo',
+        email: 'guardian@sath.demo',
         name: 'David Vance (Son)',
         phone: '+91 9561442888',
         role: 'guardian',
@@ -124,8 +126,8 @@ class DatabaseEngine {
       },
       {
         id: 'user_admin_01',
-        email: 'admin@kincare.demo',
-        name: 'KinCare Operations Admin',
+        email: 'admin@sath.demo',
+        name: 'Sath Operations Admin',
         phone: '+91 9561442888',
         role: 'admin',
         created_at: '2026-01-01T00:00:00Z',
@@ -161,7 +163,7 @@ class DatabaseEngine {
         user_id: guardianUserId,
         name: 'David Vance',
         phone: '9561442888',
-        email: 'guardian@kincare.demo',
+        email: 'guardian@sath.demo',
         relationship: 'Son',
         is_primary: true,
         notify_sms: true,

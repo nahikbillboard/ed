@@ -3,7 +3,7 @@ import {
   Utensils, 
   CheckCircle2, 
   Clock, 
-  Send, 
+  Check, 
   Mic, 
   MicOff, 
   ArrowLeft, 
@@ -13,13 +13,7 @@ import confetti from 'canvas-confetti';
 import { ApiClient } from '../../services/apiClient';
 import { playChime, speakText } from '../../utils/audioSpeech';
 import { Senior, DailyRoutine, SeniorProgress } from '../../types';
-import { 
-  DEFAULT_GUARDIAN_PHONE, 
-  redirectMealWithWhatsApp,
-  formatWhatsAppPhone,
-  buildWhatsAppMealMessage
-} from '../../utils/whatsappHelper';
-import { MessageCircle, ExternalLink } from 'lucide-react';
+import { DEFAULT_GUARDIAN_PHONE } from '../../utils/whatsappHelper';
 
 interface SeniorSingleMealProps {
   mealType: 'breakfast' | 'lunch' | 'dinner';
@@ -151,31 +145,18 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
 
     const chosenDish = dishName.trim() || defaultDishSuggestions[0];
 
-    // Synchronously pre-open tab in click event context to avoid popup blocking
-    let waWin: Window | null = null;
-    try {
-      waWin = window.open('about:blank', '_blank');
-    } catch (e) {
-      console.warn('Pre-open popup blocked:', e);
-    }
-
     try {
       // 1. Log meal to backend database & award XP
       const res = await ApiClient.completeMeal(mealType, senior.id, chosenDish);
 
-      onMealCompleted(res.routine, res.progress, res.whatsapp);
+      onMealCompleted(res.routine, res.progress);
       setSentSuccess(true);
 
       speakText(
-        `बहुत बढ़िया ${senior.name} जी! आपका ${mealType} में ${chosenDish} दर्ज हो गया है और आपके बच्चे को व्हाट्सएप पर भेज दिया गया है।`
+        `बहुत बढ़िया ${senior.name} जी! आपका ${mealType} में ${chosenDish} दर्ज हो गया है और गार्जियन ऐप पर लाइव अपडेट हो गया है।`
       );
-
-      // 2. Open WhatsApp directly with ready pre-filled message for 9561442888
-      redirectMealWithWhatsApp(mealType, senior.name, chosenDish, targetPhone, waWin);
     } catch (err) {
       console.error('Failed to complete meal:', err);
-      // Fallback direct WhatsApp redirection
-      redirectMealWithWhatsApp(mealType, senior.name, chosenDish, targetPhone, waWin);
       setSentSuccess(true);
     } finally {
       setLoading(false);
@@ -294,7 +275,7 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. SEND TO CHILD BUTTON (DIRECT WHATSAPP REDIRECTION)                     */}
+      {/* 2. DONE BUTTON (SYNC WITH GUARDIAN APP)                                   */}
       {/* ========================================================================= */}
       <div className="pt-2 space-y-3">
         <button
@@ -302,18 +283,18 @@ export const SeniorSingleMeal: React.FC<SeniorSingleMealProps> = ({
           type="button"
           onClick={handleConfirmAndSendWhatsApp}
           disabled={loading}
-          className="w-full py-4.5 px-6 bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-stone-950 text-lg sm:text-xl font-bold rounded-2xl shadow-lg shadow-emerald-900/15 flex items-center justify-center gap-3 transition-all disabled:opacity-50 cursor-pointer"
+          className="w-full py-4.5 px-6 bg-[#FF6321] hover:bg-[#e85516] active:scale-98 text-white text-lg sm:text-xl font-bold rounded-2xl shadow-lg shadow-orange-900/15 flex items-center justify-center gap-3 transition-all disabled:opacity-50 cursor-pointer"
         >
-          <Send className="w-5 h-5 text-stone-950" />
+          <Check className="w-6 h-6 text-white" />
           <span>
-            {loading ? 'Sending to Child...' : 'Send to Child & Open WhatsApp'}
+            {loading ? 'Saving...' : 'Done ✓ (पूरा हुआ)'}
           </span>
         </button>
 
         {sentSuccess && (
           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-4 rounded-xl text-center">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Sent to your child via WhatsApp (9561442888) ✓ (+40 XP awarded)</span>
+            <span>Saved & Synced with Guardian App ✓ (+40 XP awarded)</span>
           </div>
         )}
       </div>
