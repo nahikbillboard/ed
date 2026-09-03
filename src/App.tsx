@@ -28,6 +28,10 @@ import { GuardianSettings } from './components/guardian/GuardianSettings';
 // Onboarding
 import { SeniorOnboarding } from './components/onboarding/SeniorOnboarding';
 
+// Modals & Overlays
+import { RealNotificationManager } from './components/common/RealNotificationManager';
+import { NotificationSettingsModal } from './components/common/NotificationSettingsModal';
+
 import { TodayBundle, Senior, VoiceCallItem, NotificationItem, DailyRoutine, DailyActivity, SeniorProgress, Medicine } from './types';
 import { Heart, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 
@@ -70,6 +74,7 @@ export function App() {
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState<boolean>(false);
   const [isCompanionChatOpen, setIsCompanionChatOpen] = useState<boolean>(false);
   const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState<boolean>(false);
+  const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
   // Load Today Bundle
@@ -245,6 +250,7 @@ export function App() {
         onOpenDemoDrawer={() => setIsDemoDrawerOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
+        onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
         isOnePageActive={role === 'senior' && seniorSubView === 'onepage'}
         onToggleOnePageMode={() => {
           if (role === 'senior' && seniorSubView === 'onepage') {
@@ -575,6 +581,19 @@ export function App() {
           loadData(bundle.senior.id);
         }}
         onDatabaseReset={() => loadData('senior_eleanor_01')}
+      />
+
+      {/* Real Mobile Notification Heads-Up Alert & One-Click Tick */}
+      <RealNotificationManager
+        bundle={bundle}
+        onRefreshData={() => bundle && loadData(bundle.senior.id)}
+      />
+
+      {/* Notification Center & Test Modal */}
+      <NotificationSettingsModal
+        isOpen={isNotificationSettingsOpen}
+        onClose={() => setIsNotificationSettingsOpen(false)}
+        bundle={bundle}
       />
     </div>
   );

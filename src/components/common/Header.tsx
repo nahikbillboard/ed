@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, PhoneCall, Bot, Wrench, Volume2, VolumeX, Languages, Shield, User, ExternalLink, Layers, ArrowLeft } from 'lucide-react';
+import { Heart, PhoneCall, Bot, Wrench, Volume2, VolumeX, Languages, Shield, User, ExternalLink, Layers, ArrowLeft, Bell } from 'lucide-react';
 import { useAudioLanguage } from '../../context/LanguageContext';
 import { Senior } from '../../types';
 
@@ -14,6 +14,7 @@ interface HeaderProps {
   onToggleSound: () => void;
   isOnePageActive?: boolean;
   onToggleOnePageMode?: () => void;
+  onOpenNotificationSettings?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSound,
   isOnePageActive = false,
   onToggleOnePageMode,
+  onOpenNotificationSettings,
 }) => {
   const { language, toggleLanguage } = useAudioLanguage();
 
@@ -146,6 +148,18 @@ export const Header: React.FC<HeaderProps> = ({
                 <Bot className="w-4 h-4 text-amber-400" />
                 <span className="hidden sm:inline">AI Companion</span>
               </button>
+
+              {/* Notifications Center & Test Modal */}
+              {onOpenNotificationSettings && (
+                <button
+                  id="header-notifications-btn"
+                  onClick={onOpenNotificationSettings}
+                  className="p-2 sm:p-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-400 border border-stone-700 transition-colors cursor-pointer"
+                  title="Mobile Notifications & Task Reminder Center"
+                >
+                  <Bell className="w-4 h-4" />
+                </button>
+              )}
 
               {/* Sound Toggle */}
               <button
