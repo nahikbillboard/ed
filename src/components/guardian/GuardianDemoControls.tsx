@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Wrench, PhoneCall, AlertTriangle, MessageCircle, RefreshCw, X, Sparkles, CheckCircle2, Footprints, Pill, Bell } from 'lucide-react';
+import { Wrench, PhoneCall, AlertTriangle, MessageCircle, RefreshCw, X, Sparkles, CheckCircle2, Footprints, Pill } from 'lucide-react';
 import { ApiClient } from '../../services/apiClient';
 import { playChime, speakText } from '../../utils/audioSpeech';
-import { NotificationManager } from '../../services/notificationManager';
 import { Senior, VoiceCallItem, NotificationItem } from '../../types';
 
 interface GuardianDemoControlsProps {
@@ -56,18 +55,6 @@ export const GuardianDemoControls: React.FC<GuardianDemoControlsProps> = ({
       } else if (eventType === 'sim_steps') {
         await ApiClient.addSteps(senior.id, 2500);
         setStatusMessage('+2,500 Steps Added via Simulated Sensor!');
-        onEventDispatched();
-      } else if (eventType === 'mobile_push_test') {
-        NotificationManager.triggerTaskNotification({
-          taskType: 'breakfast_medicine',
-          title: 'Morning Medicine (Cardioprotect)',
-          titleHi: 'सुबह की दवाई (Cardioprotect)',
-          message: '1 tablet with water after breakfast.',
-          messageHi: 'नाश्ते के बाद पानी के साथ 1 गोली लें।',
-          icon: '💊',
-          xp: 40,
-        });
-        setStatusMessage('🔔 Real Mobile Task Notification & Tick Banner Dispatched!');
         onEventDispatched();
       }
     } catch (e) {
@@ -178,18 +165,6 @@ export const GuardianDemoControls: React.FC<GuardianDemoControlsProps> = ({
               Sensor & State Scenarios
             </label>
             <div className="grid grid-cols-1 gap-2">
-              <button
-                onClick={() => handleTriggerEvent('mobile_push_test')}
-                disabled={!!loadingAction}
-                className="w-full py-3 px-4 bg-orange-50 hover:bg-orange-100 active:scale-95 text-orange-950 font-bold text-xs sm:text-sm rounded-xl border border-orange-200 flex items-center justify-between transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-[#FF6321]" />
-                  <span>Send Real Mobile Push Notification</span>
-                </div>
-                <span className="text-[11px] text-[#FF6321] font-mono">Push</span>
-              </button>
-
               <button
                 onClick={() => handleTriggerEvent('sim_steps')}
                 disabled={!!loadingAction}
