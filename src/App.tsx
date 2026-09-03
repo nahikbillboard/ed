@@ -31,6 +31,7 @@ import { SeniorOnboarding } from './components/onboarding/SeniorOnboarding';
 // Modals & Overlays
 import { RealNotificationManager } from './components/common/RealNotificationManager';
 import { NotificationSettingsModal } from './components/common/NotificationSettingsModal';
+import { FirstTimeNotificationPrompt } from './components/common/FirstTimeNotificationPrompt';
 
 import { TodayBundle, Senior, VoiceCallItem, NotificationItem, DailyRoutine, DailyActivity, SeniorProgress, Medicine } from './types';
 import { Heart, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
@@ -595,6 +596,9 @@ export function App() {
         onClose={() => setIsNotificationSettingsOpen(false)}
         bundle={bundle}
       />
+
+      {/* 1st Time Open Automatic Official Permission & Permanent Push Trigger */}
+      <FirstTimeNotificationPrompt bundle={bundle} />
     </div>
   );
 }

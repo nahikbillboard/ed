@@ -9,7 +9,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Listen for push events or direct postMessage from client
+// Listen for direct push/show notification messages from client
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const { title, options } = event.data;
@@ -17,14 +17,13 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Handle Notification Actions (e.g., when user taps "✓ Tick Done" on mobile notification)
+// Handle Notification Actions (e.g. when user taps "✓ Tick Done" on mobile notification)
 self.addEventListener('notificationclick', (event) => {
   const notification = event.notification;
   const action = event.action;
   const data = notification.data || {};
 
-  notification.close();
-
+  // For actionable ticks, don't necessarily close permanent tracker, or re-show updated
   if (action === 'tick_done' || action === 'complete') {
     event.waitUntil(
       (async () => {
@@ -34,8 +33,8 @@ self.addEventListener('notificationclick', (event) => {
         for (const client of allClients) {
           client.postMessage({
             type: 'NOTIFICATION_TASK_TICKED',
-            taskId: data.taskId,
-            taskType: data.taskType,
+            taskId: data.taskId || data.taskType || 'next_task',
+            taskType: data.taskType || data.taskId || 'next_task',
             timestamp: Date.now(),
           });
           clientFound = true;
@@ -50,7 +49,8 @@ self.addEventListener('notificationclick', (event) => {
       })()
     );
   } else {
-    // Regular tap on notification body opens/focuses app
+    // Regular tap on notification body opens or focuses app
+    notification.close();
     event.waitUntil(
       (async () => {
         const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
@@ -66,3 +66,4 @@ self.addEventListener('notificationclick', (event) => {
     );
   }
 });
+

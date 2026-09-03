@@ -46,8 +46,13 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   if (!isOpen) return null;
 
   const handleRequestPermission = async () => {
-    const res = await NotificationManager.requestPermission();
+    const res = await NotificationManager.requestPermission(bundle, language as any);
     setPermission(res);
+  };
+
+  const handleRefreshPermanentNotification = async () => {
+    await NotificationManager.updatePermanentNotification(bundle, language as any);
+    playChime('ding');
   };
 
   const handleSendTestNotification = () => {
@@ -160,13 +165,21 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               : 'Allow system notifications so Sath can buzz your phone and show routine tasks with 1-tap completion.'}
           </p>
 
-          {permission !== 'granted' && (
+          {permission !== 'granted' ? (
             <button
               onClick={handleRequestPermission}
               className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
               <Bell className="w-4 h-4" />
               <span>{language === 'hi' ? 'फोन पर नोटिफिकेशन चालू करें' : 'Enable System Notifications'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleRefreshPermanentNotification}
+              className="w-full py-2.5 px-4 bg-stone-700 hover:bg-stone-600 text-amber-300 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-stone-600"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>{language === 'hi' ? '🌟 स्थायी स्टेटस बार ट्रैकर अपडेट करें' : '🌟 Push / Update Permanent Status Bar Tracker'}</span>
             </button>
           )}
         </div>

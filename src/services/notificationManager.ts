@@ -18,6 +18,8 @@ export interface ActiveInAppNotification {
 type NotificationListener = (notif: ActiveInAppNotification | null) => void;
 type TaskCompletedListener = (taskType: string) => void;
 
+const FIRST_TIME_STORAGE_KEY = 'sath_notification_permission_prompted_v3';
+
 export class NotificationManager {
   private static swRegistration: ServiceWorkerRegistration | null = null;
   private static listeners: Set<NotificationListener> = new Set();
@@ -41,7 +43,7 @@ export class NotificationManager {
         // Listen for message from service worker (e.g. user tapped "✓ Tick Done" on phone lockscreen)
         navigator.serviceWorker.addEventListener('message', async (event) => {
           if (event.data && event.data.type === 'NOTIFICATION_TASK_TICKED') {
-            const taskType = event.data.taskType;
+            const taskType = event.data.taskType || event.data.taskId;
             if (taskType) {
               await this.completeTask(taskType);
             }
@@ -50,6 +52,31 @@ export class NotificationManager {
       } catch (err) {
         console.warn('[NotificationManager] Service worker registration error:', err);
       }
+    }
+  }
+
+  /**
+   * Check if this is the first time the app is opened
+   */
+  public static isFirstTimePromptPending(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+      const alreadyPrompted = localStorage.getItem(FIRST_TIME_STORAGE_KEY);
+      return alreadyPrompted !== 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Mark first time prompt as completed
+   */
+  public static markFirstTimePromptDone() {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(FIRST_TIME_STORAGE_KEY, 'true');
+    } catch {
+      // ignore
     }
   }
 
@@ -64,21 +91,124 @@ export class NotificationManager {
   }
 
   /**
-   * Request native notification permission
+   * Request native notification permission and auto-push permanent tracker if granted
    */
-  public static async requestPermission(): Promise<NotificationPermission> {
+  public static async requestPermission(bundle?: TodayBundle | null, language: 'en' | 'hi' = 'hi'): Promise<NotificationPermission> {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       return 'denied';
     }
     try {
+      this.markFirstTimePromptDone();
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         playChime('ding');
+        // Instantly push permanent ongoing notification
+        await this.updatePermanentNotification(bundle || ApiClient.getLocalBundle(), language);
       }
       return permission;
     } catch (e) {
       console.warn('Error requesting permission:', e);
       return 'denied';
+    }
+  }
+
+  /**
+   * Updates or pushes a Permanent / Ongoing notification in the Android status bar
+   */
+  public static async updatePermanentNotification(bundle: TodayBundle | null, language: 'en' | 'hi' = 'hi') {
+    if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
+      return;
+    }
+
+    try {
+      const currentBundle = bundle || ApiClient.getLocalBundle();
+      const routine = currentBundle?.routine;
+      const steps = currentBundle?.activity?.steps || 3420;
+
+      let nextTaskTitle = 'All Morning Tasks Done!';
+      let nextTaskTitleHi = 'सभी कार्य पूरे हुए!';
+      let nextTaskType = 'hydration';
+
+      if (routine) {
+        if (routine.breakfast_medicine_status !== 'completed') {
+          nextTaskTitle = 'Morning Medicine (Cardioprotect)';
+          nextTaskTitleHi = 'सुबह की दवाई (Cardioprotect)';
+          nextTaskType = 'breakfast_medicine';
+        } else if (routine.walking_status !== 'completed') {
+          nextTaskTitle = 'Morning Walk & Steps';
+          nextTaskTitleHi = 'सुबह की ताज़ा सैर व कदम';
+          nextTaskType = 'walk';
+        } else if (routine.yoga_status !== 'completed') {
+          nextTaskTitle = 'Gentle Chair Yoga';
+          nextTaskTitleHi = 'सुगम कुर्सी योग';
+          nextTaskType = 'yoga';
+        } else if (routine.lunch_status !== 'completed') {
+          nextTaskTitle = 'Midday Healthy Lunch';
+          nextTaskTitleHi = 'दोपहर का पौष्टिक भोजन';
+          nextTaskType = 'lunch';
+        } else if (routine.night_medicine_status !== 'completed') {
+          nextTaskTitle = 'Night Medicine';
+          nextTaskTitleHi = 'रात की दवाई';
+          nextTaskType = 'night_medicine';
+        }
+      }
+
+      // Count completed tasks
+      let completedCount = 0;
+      const totalCount = 6;
+      if (routine) {
+        if (routine.wake_status === 'completed') completedCount++;
+        if (routine.breakfast_medicine_status === 'completed') completedCount++;
+        if (routine.walking_status === 'completed') completedCount++;
+        if (routine.yoga_status === 'completed') completedCount++;
+        if (routine.lunch_status === 'completed') completedCount++;
+        if (routine.night_medicine_status === 'completed') completedCount++;
+      }
+
+      const title = language === 'hi'
+        ? `🌟 Sath: ${nextTaskTitleHi}`
+        : `🌟 Sath Companion: ${nextTaskTitle}`;
+
+      const body = language === 'hi'
+        ? `🚶 कदम: ${steps.toLocaleString()} • प्रोग्रेस: ${completedCount}/${totalCount} पूर्ण • टैप करें ✓ पूरा करने के लिए`
+        : `🚶 Steps: ${steps.toLocaleString()} • Progress: ${completedCount}/${totalCount} Done • Tap below to tick done`;
+
+      if (this.swRegistration && 'showNotification' in this.swRegistration) {
+        await this.swRegistration.showNotification(title, {
+          body,
+          tag: 'sath-permanent-tracker',
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          ongoing: true,
+          requireInteraction: true,
+          silent: true,
+          renotify: false,
+          data: {
+            taskType: nextTaskType,
+            taskId: nextTaskType,
+            isPermanent: true,
+          },
+          actions: [
+            {
+              action: 'tick_done',
+              title: language === 'hi' ? '✓ पूरा हुआ (Tick Done)' : '✓ Tick Current Task',
+            },
+            {
+              action: 'open_app',
+              title: '📱 Open Sath',
+            },
+          ],
+        } as any);
+      } else {
+        new Notification(title, {
+          body,
+          icon: '/favicon.ico',
+          tag: 'sath-permanent-tracker',
+          requireInteraction: true,
+        });
+      }
+    } catch (err) {
+      console.warn('[NotificationManager] Permanent notification update suppressed:', err);
     }
   }
 
@@ -191,7 +321,7 @@ export class NotificationManager {
             actions: [
               {
                 action: 'tick_done',
-                title: '✓ Tick Done (पूरा हुआ)',
+                title: language === 'hi' ? '✓ पूरा हुआ (Tick Done)' : '✓ Tick Done',
               },
               {
                 action: 'open_app',
@@ -226,15 +356,38 @@ export class NotificationManager {
   public static async completeTask(taskType: string, seniorId?: string): Promise<boolean> {
     try {
       const activeSeniorId = seniorId || ApiClient.getLocalBundle()?.senior?.id || 'senior_eleanor_01';
-      
+      const bundle = ApiClient.getLocalBundle();
+
+      let targetTask = taskType;
+      if (taskType === 'next_task' && bundle) {
+        const routine = bundle.routine;
+        if (routine?.breakfast_medicine_status !== 'completed') {
+          targetTask = 'breakfast_medicine';
+        } else if (routine?.walking_status !== 'completed') {
+          targetTask = 'walk';
+        } else if (routine?.yoga_status !== 'completed') {
+          targetTask = 'yoga';
+        } else if (routine?.lunch_status !== 'completed') {
+          targetTask = 'lunch';
+        } else if (routine?.night_medicine_status !== 'completed') {
+          targetTask = 'night_medicine';
+        } else {
+          targetTask = 'breakfast_medicine';
+        }
+      }
+
       // Update task in database & client
-      await ApiClient.completeRoutineTask(activeSeniorId, taskType as any, `Completed ${taskType}`);
+      await ApiClient.completeRoutineTask(activeSeniorId, targetTask as any, `Completed ${targetTask}`);
 
       playChime('success');
       this.emitNotification(null);
 
+      // Refresh permanent status bar notification
+      const updatedBundle = ApiClient.getLocalBundle();
+      await this.updatePermanentNotification(updatedBundle);
+
       // Notify all task completed listeners (updates App state)
-      this.taskCompletedListeners.forEach((fn) => fn(taskType));
+      this.taskCompletedListeners.forEach((fn) => fn(targetTask));
 
       return true;
     } catch (err) {
@@ -243,3 +396,4 @@ export class NotificationManager {
     }
   }
 }
+
